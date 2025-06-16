@@ -53,15 +53,16 @@ tr_historical = [
 
 tr_ssp = [
     ('2020-01-01', '2030-01-01'),
-    # ('2030-01-01', '2040-01-01'),
-    # ('2040-01-01', '2050-01-01'),
+    ('2030-01-01', '2040-01-01'),
+    ('2040-01-01', '2050-01-01'),
     ('2050-01-01', '2060-01-01'),
-    # ('2060-01-01', '2070-01-01'),
+    ('2060-01-01', '2070-01-01'),
     ('2070-01-01', '2080-01-01'),
-    # ('2080-01-01', '2090-01-01'),
+    ('2080-01-01', '2090-01-01'),
     ('2090-01-01', '2100-01-01')
 ]
-ssps = ['historical', 'ssp245', 'ssp585']
+
+ssps = ['ssp245', 'ssp585']
 gcms = [
     'MPI-ESM1-2-HR',
     'GFDL-ESM4',
@@ -69,6 +70,8 @@ gcms = [
     'IPSL-CM6A-LR',
     'CanESM5'
 ]
+
+overwrite = False  # Set to True if you want to overwrite existing files
 
 for gcm in gcms:
     for ssp in ssps:
@@ -89,7 +92,7 @@ for gcm in gcms:
 
             for savepath_dict in [savepath_dict_fine,
                                   savepath_dict_coarse]:
-                if not fut.exist_file(savepath_dict):
+                if not fut.exist_file(savepath_dict) or overwrite:
                     ds_cmip_raw_fine = of.open_nc_file(
                         sample_path_fine, verbose=False)
                     ds_cmip_raw_coarse = of.open_nc_file(
