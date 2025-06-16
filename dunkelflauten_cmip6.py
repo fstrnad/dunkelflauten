@@ -19,13 +19,22 @@ from importlib import reload
 import geoutils.countries.countries as cnt
 import geoutils.countries.capacities as cap
 import geoutils.cutouts.prepare_cutout as pc
-
+import os
 import yaml
-with open('./config.yaml', 'r') as file:
-    config = yaml.safe_load(file)
-data_dir = "/home/strnad/data/CMIP6/downscaling/"
-cmip6_dir = "/home/strnad/data/CMIP6/"
-era5_dir = "/home/strnad/data/climate_data/Europe"
+# %%
+if os.getenv("HOME") == '/home/ludwig/fstrnad80':
+    cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
+    data_dir = f'{cmip6_dir}/downscaling/'
+    era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/climate_data/Europe"
+    with open('./config_cluster.yaml', 'r') as file:
+        config = yaml.safe_load(file)
+else:
+    plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
+    data_dir = "/home/strnad/data/CMIP6/downscaling/"
+    cmip6_dir = "/home/strnad/data/CMIP6/"
+    era5_dir = "/home/strnad/data/climate_data/Europe"
+    with open('./config.yaml', 'r') as file:
+        config = yaml.safe_load(file)
 
 # %%
 reload(of)
@@ -33,15 +42,20 @@ reload(gut)
 reload(fut)
 variables = ['tas', 'uas', 'vas', 'rsds']
 europe_dir = config['europe_dir']
-
-gcm = 'MPI-ESM1-2-HR'
-gcm = 'GFDL-ESM4'
 time = 'day'
 
 country_name = 'Germany'
 gs_dws = 1.0
 fine_res = 0.25
 N = 3
+
+gcms = [
+    'MPI-ESM1-2-HR',
+    'GFDL-ESM4',
+    'MIROC6',
+    'IPSL-CM6A-LR',
+    'CanESM5'
+]
 
 tr_historical = [
     ('1980-01-01', '1990-01-01'),
@@ -50,33 +64,50 @@ tr_historical = [
     ('2010-01-01', '2015-01-01')]
 
 tr_ssp = [
-    ('2020-01-01', '2029-12-31'),
-    ('2050-01-01', '2059-12-31'),
-    ("2070-01-01", "2079-12-31"),
-    ('2090-01-01', '2099-12-31')
+    ('2020-01-01', '2030-01-01'),
+    ('2030-01-01', '2040-01-01'),
+    ('2040-01-01', '2050-01-01'),
+    ('2050-01-01', '2060-01-01'),
+    ('2060-01-01', '2070-01-01'),
+    ('2070-01-01', '2080-01-01'),
+    ('2080-01-01', '2090-01-01'),
+    ('2090-01-01', '2100-01-01')
 ]
 ssps = ['historical', 'ssp245', 'ssp585']
 
-ssp_cf_dict = {}
-for ssp in ssps:
-    gcm_str = f'{gcm}_{ssp}'
-    cf_tr_dict = {}
-    time_ranges = tr_ssp if ssp != 'historical' else tr_historical
-    for tr_idx, (start_date, end_date) in enumerate(time_ranges):
-        start_date, end_date = time_ranges[tr_idx]
-        tr_str = f'{start_date}_{end_date}'
+gcm_ssp_cf_dict = {}
+for gcm in gcms:
+    ssp_cf_dict = {}
+    for ssp in ssps:
+        gcm_str = f'{gcm}_{ssp}'
+        cf_tr_dict = {}
+        time_ranges = tr_ssp if ssp != 'historical' else tr_historical
+        for tr_idx, (start_date, end_date) in enumerate(time_ranges):
+            start_date, end_date = time_ranges[tr_idx]
+            tr_str = f'{start_date}_{end_date}'
 
-        reload(cfu)
-        savepath_dict = f'{config['data_dir']}/{country_name}/CMIP6/cf/cf_dict_{gcm_str}_{fine_res}_{tr_str}.npy'
-        if fut.exist_file(savepath_dict):
-            cf_dict_cmip = fut.load_np_dict(savepath_dict)
-            cf_tr_dict[tr_str] = cf_dict_cmip
-        else:
-            print(f'CF {ssp} {tr_str} not found')
-    ssp_cf_dict[ssp] = cf_tr_dict
+            reload(cfu)
+            savepath_dict = f'{config['data_dir']}/{country_name}/CMIP6/cf/cf_dict_{gcm_str}_{fine_res}_{tr_str}.npy'
+            if fut.exist_file(savepath_dict):
+                cf_dict_cmip = fut.load_np_dict(savepath_dict)
+                cf_tr_dict[tr_str] = cf_dict_cmip
+            else:
+                print(f'{gcm} {ssp} {tr_str} not found')
+        ssp_cf_dict[ssp] = cf_tr_dict
+    gcm_ssp_cf_dict[gcm] = ssp_cf_dict
+
+# %%
+# For comparison with ERA5
+gs_era5 = 0.25
+cf_dict_path_era5 = f'{config['data_dir']}/{country_name}/era5/cf_dict_{gs_era5}.npy'
+
+cf_dict_era5 = fut.load_np_dict(cf_dict_path_era5)
 # %%
 # Risk per year
 reload(tu)
+gcm = 'MPI-ESM1-2-HR'
+ssp_cf_dict = gcm_ssp_cf_dict['MPI-ESM1-2-HR']
+
 df_type = 'all'
 for ssp, cf_tr_dict in ssp_cf_dict.items():
     gcm_str = f'{gcm}_{ssp}'
@@ -177,7 +208,8 @@ for ssp, cf_tr_dict in ssp_cf_dict.items():
 reload(gplt)
 reload(cfu)
 reload(tu)
-
+gcm = 'MPI-ESM1-2-HR'
+ssp_cf_dict = gcm_ssp_cf_dict['MPI-ESM1-2-HR']
 
 for ssp, cf_tr_dict in ssp_cf_dict.items():
     gcm_str = f'{gcm}_{ssp}'
