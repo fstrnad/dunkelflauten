@@ -1,0 +1,41 @@
+plot_dir: /home/strnad/plots/dunkelflauten/
+data_dir: /home/strnad/data/dunkelflauten/
+cmip_dir: /home/strnad/data/CMIP6/
+era5_dir: /home/strnad/data/ERA5/
+europe_dir : /home/strnad/data/climate_data/Europe/
+
+data:
+  0.25: pv_wind_0.25.nc
+  0.5: pv_wind_0.5.nc
+  1: pv_wind_1.nc
+  2.5: pv_wind_2.5.nc
+  opsd: /home/strnad/data/OPSD/time_series_60min_singleindex.csv
+  CMIP6: pv_wind
+  ERA5: pv_wind_era5
+
+technology:
+  onwind:
+    weight: 0.5
+    resource:
+      turbine: Vestas_V112_3MW
+    fallback: #fallback values are chosen according to the values for Germany
+      slope: 0.75
+      intercept: 0.01
+  solar:
+    correction_factor: 1.
+    weight: 0.44
+    resource:
+      panel: CSi
+      orientation:
+        slope: 35.
+        azimuth: 180. # South
+    fallback:
+      slope: 0.81
+      intercept: 0.0
+  offwind:
+    weight: 0.06
+    resource:
+      turbine: NREL_ReferenceTurbine_5MW_offshore
+    fallback:
+      slope: 0.8
+      intercept: 0.0
