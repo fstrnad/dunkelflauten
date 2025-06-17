@@ -62,7 +62,9 @@ tr_ssp = [
     ('2090-01-01', '2100-01-01')
 ]
 
-ssps = ['ssp245', 'ssp585']
+ssps = ['historical',
+        # 'ssp245', 'ssp585'
+        ]
 gcms = [
     'MPI-ESM1-2-HR',
     'GFDL-ESM4',

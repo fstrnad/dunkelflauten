@@ -203,15 +203,63 @@ for ssp, cf_tr_dict in ssp_cf_dict.items():
 
         savepath = f'{config['plot_dir']}/dunkelflauten_cmip6/ts_{df_type}_df_{gcm_str}_{gs_dws}_{sd}_{ed}.png'
         gplt.save_fig(savepath)
+# %%  Compute all local dunkelflaute events
+
+
+def local_dfs(cf_dict, num_hours=48, hourly_res=6, threshold=0.02):
+    cf_onwind_solar = cfu.combined_cf_maps(cf_dict,
+                                           sources=['onwind', 'solar'],)
+    cf_onwind_solar = sput.rename_dims(cf_onwind_solar)
+
+    window = int(num_hours / hourly_res)  # 8*6 = 48 hours
+    cf_ts_mean = tu.rolling_timemean(cf_onwind_solar, window=window)
+    df_local_onwind, mask = tu.compute_evs(cf_ts_mean,
+                                           threshold=threshold,
+                                           threshold_type='lower',
+                                           #    max_rel_share=0.02,
+                                           get_mask=True)
+
+    num_years = tu.count_unique_years(df_local_onwind)
+    num_dfs_cell = df_local_onwind.sum(dim='time')
+    sd, ed = tu.get_time_range(df_local_onwind, asstr=True)
+    dfs_per_year = num_dfs_cell / num_years
+
+    return dfs_per_year
+
+
+df_dict = {}
+df_dict['ERA5'] = local_dfs(cf_dict_cmip,
+                            num_hours=num_hours,
+                            hourly_res=hourly_res,
+                            threshold=threshold)
+
+
+for gcm in gcms:
+    ssp_df_dict = {}
+    for ssp in ssps:
+        gcm_str = f'{gcm}_{ssp}'
+        df_tr_dict = {}
+        time_ranges = tr_ssp if ssp != 'historical' else tr_historical
+        for tr_idx, (start_date, end_date) in enumerate(time_ranges):
+            start_date, end_date = time_ranges[tr_idx]
+            tr_str = f'{start_date}_{end_date}'
+            cf_dict_cmip = gcm_ssp_cf_dict[gcm][ssp][tr_str]
+            dfs_per_year = local_dfs(cf_dict_cmip,
+                                     num_hours=num_hours,
+                                     hourly_res=hourly_res,
+                                     threshold=threshold)
+            df_tr_dict[tr_str] = dfs_per_year
+        ssp_df_dict[ssp] = df_tr_dict
+    df_dict[gcm] = ssp_df_dict
 # %%
 # Local dunkelflauten Germany
 reload(gplt)
 reload(cfu)
 reload(tu)
 gcm = 'MPI-ESM1-2-HR'
-ssp_cf_dict = gcm_ssp_cf_dict['MPI-ESM1-2-HR']
+ssp_df_dict = df_dict[gcm]
 
-for ssp, cf_tr_dict in ssp_cf_dict.items():
+for ssp, cf_tr_dict in ssp_df_dict.items():
     gcm_str = f'{gcm}_{ssp}'
     im_df = gplt.create_multi_plot(
         nrows=1, ncols=len(cf_tr_dict),
@@ -219,35 +267,20 @@ for ssp, cf_tr_dict in ssp_cf_dict.items():
     )
 
     for idx, (tr_str, cf_dict_cmip) in enumerate(cf_tr_dict.items()):
-        cf_onwind_solar = cfu.combined_cf_maps(cf_dict_cmip,
-                                               sources=['onwind', 'solar'],)
-        cf_onwind_solar = sput.rename_dims(cf_onwind_solar)
-        num_hours = 48
-        hourly_res = 6
-        window = int(num_hours / hourly_res)  # 8*6 = 48 hours
-        cf_ts_mean = tu.rolling_timemean(cf_onwind_solar, window=window)
-        threshold = 0.02
-        df_local_onwind, mask = tu.compute_evs(cf_ts_mean,
-                                               threshold=threshold,
-                                               threshold_type='lower',
-                                               #    max_rel_share=0.02,
-                                               get_mask=True)
-
-        num_years = tu.count_unique_years(df_local_onwind)
-        num_dfs_cell = df_local_onwind.sum(dim='time')
-        sd, ed = tu.get_time_range(df_local_onwind, asstr=True)
-        gplt.plot_map(num_dfs_cell/num_years,
+        dfs_per_year = df_dict[gcm][ssp][tr_str]
+        gplt.plot_map(dfs_per_year,
                       ax=im_df['ax'][idx],
                       plot_borders=True,
                       significance_mask=xr.where(mask, 0, 1),
                       vmin=0,
                       vmax=25,
                       label='No. of Dunkelflauten / Year',
-                      title=f'{sd} - {ed}',
+                      title=f'{tr_str}',
                       vertical_title=f'{gcm} {ssp}' if idx == 0 else None,
-                      cmap='Reds',
+                      cmap='cmo.amp',
                       leftcolor='white',
-                      levels=10,
+                      tick_step=5,
+                      levels=25,
                       )
 
     savepath = f"{config['plot_dir']}/local_risks/CMIP6/df_local_2020_2100_{gcm_str}_{gs_dws}.png"
@@ -255,54 +288,47 @@ for ssp, cf_tr_dict in ssp_cf_dict.items():
 # %%
 # compare to historical period
 reload(gplt)
+num_hours = 48
+hourly_res = 6
+threshold = 0.02
+use_era5 = True
+gcm = 'MPI-ESM1-2-HR'
+ssp_cf_dict = gcm_ssp_cf_dict['MPI-ESM1-2-HR']
 
-avs_dfs_per_year = 0
 
+if use_era5:
+    dfs_per_year_era5 = df_dict['ERA5']
+
+avs_dfs_per_year_hist = 0
+vmin = -15
 for ssp, cf_tr_dict in ssp_cf_dict.items():
     gcm_str = f'{gcm}_{ssp}'
-    if ssp != 'historical':
-        im_df = gplt.create_multi_plot(
-            nrows=1, ncols=len(cf_tr_dict),
-            projection='PlateCarree',
-        )
+    im_df = gplt.create_multi_plot(
+        nrows=1, ncols=len(cf_tr_dict),
+        projection='PlateCarree',
+    )
     for idx, (tr_str, cf_dict_cmip) in enumerate(cf_tr_dict.items()):
-        cf_onwind_solar = cfu.combined_cf_maps(cf_dict_cmip,
-                                               sources=['onwind', 'solar'],)
-        cf_onwind_solar = sput.rename_dims(cf_onwind_solar)
-        num_hours = 48
-        hourly_res = 6
-        window = int(num_hours / hourly_res)  # 8*6 = 48 hours
-        cf_ts_mean = tu.rolling_timemean(cf_onwind_solar, window=window)
-        threshold = 0.02
-        df_local_onwind, mask = tu.compute_evs(cf_ts_mean,
-                                               threshold=threshold,
-                                               threshold_type='lower',
-                                               #    max_rel_share=0.02,
-                                               get_mask=True)
 
-        num_years = tu.count_unique_years(df_local_onwind)
-        num_dfs_cell = df_local_onwind.sum(dim='time')
-        sd, ed = tu.get_time_range(df_local_onwind, asstr=True)
-        dfs_per_year = num_dfs_cell / num_years
+        dfs_per_year = df_dict[gcm][ssp][tr_str]
 
-        if ssp == 'historical':
-            avs_dfs_per_year += dfs_per_year
-        else:
-            gplt.plot_map(dfs_per_year - avs_dfs_per_year/len(tr_historical),
-                          ax=im_df['ax'][idx],
-                          plot_borders=True,
-                          significance_mask=xr.where(mask, 0, 1),
-                          vmin=-5,
-                          vmax=5,
-                          label='No. of Dunkelflauten / Year - Historical',
-                          title=f'{sd} - {ed}',
-                          vertical_title=f'{gcm} {ssp}' if idx == 0 else None,
-                          cmap='cmo.balance',
-                          centercolor='white',
-                          levels=10,
-                          )
+        if use_era5:
+            diff = dfs_per_year - dfs_per_year_era5
 
-    savepath = f"{config['plot_dir']}/local_risks/CMIP6/df_local_compare_historical_{gcm_str}_{gs_dws}.png"
+        gplt.plot_map(diff,
+                      ax=im_df['ax'][idx],
+                      plot_borders=True,
+                    #   significance_mask=xr.where(mask, 0, 1),
+                      vmin=vmin,
+                      vmax=-vmin,
+                      label='No. of Dunkelflauten / Year - Historical (ERA5)',
+                      title=f'{tr_str}',
+                      vertical_title=f'{gcm} {ssp}' if idx == 0 else None,
+                      cmap='cmo.balance',
+                      centercolor='white',
+                      levels=20,
+                      )
+    if use_era5:
+        savepath = f"{config['plot_dir']}/local_risks/CMIP6/df_local_compare_era5_{gcm_str}_{gs_dws}.png"
+    else:
+        savepath = f"{config['plot_dir']}/local_risks/CMIP6/df_local_compare_hist_{gcm_str}_{gs_dws}.png"
     gplt.save_fig(savepath)
-
-# %%
