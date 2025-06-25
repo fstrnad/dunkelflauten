@@ -38,7 +38,7 @@ folder_name = f'{tr}_N{N}'
 use_log = False
 data_str = f'2023-01-01_2025-01-01'
 samples_path = f'{data_dir}/eval_with_gt/{folder_name}/samples_era5_{data_str}_{fine_res}_log_{use_log}.nc'
-gt_path = f'{data_dir}/eval_with_gt/{folder_name}/gt_era5_{data_str}_{fine_res}_log_{use_log}.nc'
+gt_path = f'{data_dir}/eval_with_gt/{folder_name}/gt_era5_{tr}_{fine_res}_log_{use_log}.nc'
 obs_path = f'{data_dir}/eval_with_gt/{folder_name}/obs_era5_{data_str}_{coarse_res}_log_{use_log}.nc'
 
 ds_samples = of.open_nc_file(samples_path)

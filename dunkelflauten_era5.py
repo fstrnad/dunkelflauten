@@ -21,30 +21,40 @@ import geoutils.utils.file_utils as fut
 import geoutils.plotting.plots as gplt
 import geoutils.preprocessing.open_nc_file as of
 from importlib import reload
+import os
 import yaml
-with open('./config.yaml', 'r') as file:
-    config = yaml.safe_load(file)
-
-
-plot_dir = "/home/strnad/plots/dunkelflauten/"
-data_dir = "/home/strnad/data/dunkelflauten/"
 # %%
-gs = .25
-country_name = "Germany"
-cf_dict_path = f'{config['data_dir']}/{country_name}/era5/cf_dict_{gs}.npy'
-
-cf_dict = fut.load_np_dict(cf_dict_path)
+if os.getenv("HOME") == '/home/ludwig/fstrnad80':
+    cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
+    data_dir = f'{cmip6_dir}/downscaling/'
+    era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/climate_data/Europe"
+    with open('./config_cluster.yaml', 'r') as file:
+        config = yaml.safe_load(file)
+else:
+    plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
+    data_dir = "/home/strnad/data/CMIP6/downscaling/"
+    cmip6_dir = "/home/strnad/data/CMIP6/"
+    era5_dir = "/home/strnad/data/climate_data/Europe"
+    with open('./config.yaml', 'r') as file:
+        config = yaml.safe_load(file)
 # %%
-ts_offwind = cf_dict['offwind']['ts']
-ts_onwind = cf_dict['onwind']['ts']
-ts_solar = cf_dict['solar']['ts']
+country_name = 'Germany'
+gs_era5 = 0.25
+tr_str = '1980-01-01_2025-01-01'
+cf_dict_path_era5 = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{gs_era5}_{tr_str}.npy'
+
+cf_dict_era5 = fut.load_np_dict(cf_dict_path_era5)
+# %%
+ts_offwind = cf_dict_era5['offwind']['ts']
+ts_onwind = cf_dict_era5['onwind']['ts']
+ts_solar = cf_dict_era5['solar']['ts']
 
 
 # %%
 reload(tu)
 df_type = 'all'
 time_range = ['1979-01-01', '2024-12-31']
-ts_df = tu.get_time_range_data(cf_dict[df_type]['ts'],
+ts_df = tu.get_time_range_data(cf_dict_era5[df_type]['ts'],
                                time_range=time_range)
 hourly_res = tu.get_frequency_resolution_hours(ts_df)
 num_years = tu.count_unique_years(ts_df)
@@ -133,7 +143,7 @@ gplt.plot_2d(x=dfl_per_week.time.data,
              ylim=(0, 9)
              )
 
-savepath = f'{config['plot_dir']}/dunkelflauten_era5/ts_{df_type}_dunkelflauten_era5_{gs}.png'
+savepath = f'{config['plot_dir']}/dunkelflauten_era5/ts_{df_type}_dunkelflauten_era5_{gs_era5}.png'
 gplt.save_fig(savepath)
 
 # %%
@@ -141,7 +151,7 @@ gplt.save_fig(savepath)
 # Local dunkelflauten Germany
 reload(gplt)
 reload(cfu)
-local_cfs = cfu.combined_cf_maps(cf_dict,
+local_cfs = cfu.combined_cf_maps(cf_dict_era5,
                                  sources=['onwind', 'solar'],)
 # %%
 reload(tu)
@@ -185,13 +195,14 @@ for idx, tr in enumerate(time_ranges):
                   vmin=0,
                   vmax=25,
                   label='No. of Dunkelflauten / Year',
+                  vertical_title='ERA5' if idx == 0 else '',
                   title=f'{tr[0]} - {tr[1]}',
-                  cmap='Reds',
+                  cmap='cmo.amp',
                   leftcolor='white',
                   levels=10,
                   )
 
-savepath = f'{plot_dir}/local_risks/ERA5/dunkelflauten_local_era5_{gs}_{sd}_{ed}.png'
+savepath = f'{config['plot_dir']}/local_risks/ERA5/dunkelflauten_local_era5_{gs_era5}_{sd}_{ed}.png'
 gplt.save_fig(savepath, fig=im['fig'])
 
 # %%

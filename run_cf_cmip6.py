@@ -62,9 +62,15 @@ tr_ssp = [
     ('2090-01-01', '2100-01-01')
 ]
 
-ssps = ['historical',
-        # 'ssp245', 'ssp585'
-        ]
+tr_historical = [('1980-01-01', '2015-01-01')]  # full range
+tr_ssp = [('2020-01-01', '2100-01-01')]  # full range
+
+ssps = [
+    'historical',
+    'ssp245',
+    'ssp585'
+    ]
+
 gcms = [
     'MPI-ESM1-2-HR',
     'GFDL-ESM4',
@@ -83,11 +89,19 @@ for gcm in gcms:
             tr_str = f'{start_date}_{end_date}'
 
             sample_folder = f'{data_dir}/{gs_dws}/{gcm_str}/{tr_str}_N{N}/'
-            sample_path_fine = fut.get_files_in_folder(sample_folder,
-                                                       include_string=f'{fine_res}')[0]
-            sample_path_coarse = fut.get_files_in_folder(
+            sample_path_files = fut.get_files_in_folder(sample_folder,
+                                                       include_string=f'{fine_res}')
+            if len(sample_path_files) > 0:
+                sample_path_fine = sample_path_files[0]
+            else:
+                continue
+            sample_path_coarse_files = fut.get_files_in_folder(
                 sample_folder,
-                include_string=f'{coarse_res}')[0]
+                include_string=f'{coarse_res}')
+            if len(sample_path_coarse_files) > 0:
+                sample_path_coarse = sample_path_coarse_files[0]
+            else:
+                continue
 
             savepath_dict_fine = f'{config['data_dir']}/{country_name}/CMIP6/cf/cf_dict_{gcm_str}_{fine_res}_{tr_str}.npy'
             savepath_dict_coarse = f'{config['data_dir']}/{country_name}/CMIP6/cf/cf_dict_{gcm_str}_{coarse_res}_{tr_str}.npy'

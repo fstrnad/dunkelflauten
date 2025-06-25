@@ -15,6 +15,22 @@ import atlite as at
 from importlib import reload
 import geoutils.countries.countries as cnt
 import geoutils.cutouts.prepare_cutout as pc
+import os
+import yaml
+# %%
+if os.getenv("HOME") == '/home/ludwig/fstrnad80':
+    cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
+    data_dir = f'{cmip6_dir}/downscaling/'
+    era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
+    with open('./config_cluster.yaml', 'r') as file:
+        config = yaml.safe_load(file)
+else:
+    plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
+    data_dir = "/home/strnad/data/CMIP6/downscaling/"
+    cmip6_dir = "/home/strnad/data/CMIP6/"
+    era5_dir = "/home/strnad/data/climate_data/Europe"
+    with open('./config.yaml', 'r') as file:
+        config = yaml.safe_load(file)
 
 # %%
 reload(cnt)
@@ -151,11 +167,11 @@ def compute_cf_dict(cutout_country, config,
         ind_matrix, country_shape = prepare_country_matrix(
             cutout=cutout_country,
             country_name=country_name,
-            onshore=False if source == 'offwind' else True)
+            onshore=True if source == 'onwind' else False)
         ind_matrix_xr, _ = prepare_country_matrix(
             cutout=cutout_country,
             country_name=country_name,
-            onshore=False if source == 'offwind' else True,
+            onshore=True if source == 'onwind' else False,
             as_xr=True)
 
         # Capacity factors PV

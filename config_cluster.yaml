@@ -9,7 +9,7 @@ data:
   0.5: pv_wind_0.5.nc
   1: pv_wind_1.nc
   2.5: pv_wind_2.5.nc
-  opsd: /mnt/lustre/home/ludwig/fstrnad80/data/OPSD/
+  opsd: /mnt/lustre/home/ludwig/fstrnad80/data/OPSD/time_series_60min_singleindex.csv
   CMIP6: pv_wind
   ERA5: pv_wind_era5
 

@@ -17,11 +17,22 @@ from importlib import reload
 import geoutils.countries.countries as cnt
 import geoutils.countries.capacities as cap
 import cf_utils as cfu
+import os
 import yaml
-with open('./config.yaml', 'r') as file:
-    config = yaml.safe_load(file)
-cmip6_dir = "/home/strnad/data/CMIP6/"
-era5_dir = "/home/strnad/data/climate_data/Europe"
+# %%
+if os.getenv("HOME") == '/home/ludwig/fstrnad80':
+    cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
+    data_dir = f'{cmip6_dir}/downscaling/'
+    era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
+    with open('./config_cluster.yaml', 'r') as file:
+        config = yaml.safe_load(file)
+else:
+    plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
+    data_dir = "/home/strnad/data/CMIP6/downscaling/"
+    cmip6_dir = "/home/strnad/data/CMIP6/"
+    era5_dir = "/home/strnad/data/climate_data/Europe"
+    with open('./config.yaml', 'r') as file:
+        config = yaml.safe_load(file)
 # %%
 reload(at)
 reload(cfu)
@@ -29,7 +40,8 @@ reload(fut)
 
 country_name = "Germany"
 
-gs = 0.25
+fine_res = 0.25
+fine_res = 0.25
 cf_dict_tr = {}
 tr_historical = [
     ('1980-01-01', '1990-01-01'),
@@ -41,7 +53,7 @@ tr_historical = [
 for (start_date, end_date) in tr_historical:
     tr_str = f'{start_date}_{end_date}'
 
-    savepath_dict = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{gs}_{tr_str}.npy'
+    savepath_dict = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{fine_res}_{tr_str}.npy'
 
     if fut.exist_file(savepath_dict):
         cf_dict_cmip = fut.load_np_dict(savepath_dict)
@@ -66,7 +78,7 @@ im = gplt.plot_map(indicator_matrix,
                    cmap="Greens", label='Weight',
                    title='Onshore and Offshore Weights')
 
-savepath = f"{config['plot_dir']}/capacities_era5/{country_name}_{gs}_weights_off_on.png"
+savepath = f"{config['plot_dir']}/capacities_era5/{country_name}_{fine_res}_weights_off_on.png"
 gplt.save_fig(savepath, fig=im['fig'])
 
 # %%
@@ -120,7 +132,7 @@ for idx, (name, cf) in enumerate(cf_dict.items()):
                  title=f"{name}",
                  set_grid=True,
                  loc='upper left',)
-savepath = f"{config['plot_dir']}/bias_correction/cf_ts_{gs}_{method}_all.png"
+savepath = f"{config['plot_dir']}/bias_correction/cf_ts_{fine_res}_{method}_all.png"
 gplt.save_fig(savepath, fig=im['fig'])
 
 
@@ -141,58 +153,63 @@ for idx, (sname, source) in enumerate(cf_dict.items()):
                       vmax=.2 if sname == 'solar' else 0.4,
                       plot_borders=True)
 
-savepath = f"{config['plot_dir']}/capacities_era5/cf_map_{country_name}_{gs}.png"
+savepath = f"{config['plot_dir']}/capacities_era5/cf_map_{country_name}_{fine_res}.png"
 gplt.save_fig(savepath, fig=im['fig'])
 # %%
 # Plot all capacities together
 ncols = 3
-nrows = len(cf_dict_tr)
+nrows = len(cf_dict_tr)-1
 im = gplt.create_multi_plot(nrows=nrows, ncols=ncols,
                             projection='PlateCarree',
                             wspace=0.2)
-im_diff = gplt.create_multi_plot(nrows=nrows-1, ncols=ncols,
+im_diff = gplt.create_multi_plot(nrows=nrows, ncols=ncols,
                                  projection='PlateCarree',
                                  wspace=0.2)
-cf_0_dict = cf_dict_tr[list(cf_dict_tr.keys())[0]]
-sd, ed = tu.get_time_range(cf_0_dict['wind']['ts'],
-                           m=False, d=False, asstr=True)
+tr_ref = '1980-01-01_2025-01-01'
+cf_0_dict = cf_dict_tr[tr_ref]
+sd, ed = tu.get_time_range(
+    cf_0_dict['wind']['ts'], asstr=True, m=False, d=False)
 for tr_idx, (tr_str, cf_dict_cmip) in enumerate(cf_dict_tr.items()):
-    sd, ed = tu.get_time_range(cf_dict_cmip['wind']['ts'], asstr=True)
-    vertical_title = f'ERA5 \n({sd} - {ed})'
+    if tr_str == tr_ref:
+        continue
+    sd_tr, ed_tr = tu.get_time_range(cf_dict_cmip['wind']['ts'], asstr=True)
+    vertical_title = f'ERA5 \n({sd_tr} - {ed_tr})'
 
     for idx, (sname, source) in enumerate(cf_dict_cmip.items()):
         if sname != 'wind' and sname != 'all':
             cap_fac = source['cf']
             cf_0 = cf_0_dict[sname]['cf']
-            gplt.plot_map(cap_fac,
-                          ax=im['ax'][tr_idx*ncols + idx],
+            # gplt.plot_map(cap_fac,
+            #               ax=im['ax'][tr_idx*ncols + idx],
+            #               title=sname if tr_idx == 0 else None,
+            #               vertical_title=vertical_title if idx == 0 else None,
+            #               cmap='cmo.amp_r',
+            #               vmin=0,
+            #               vmax=.15 if sname == 'solar' else 0.4,
+            #               label='Capacity Factor [a.u.]' if tr_idx == nrows -
+            #               1 else None,
+            #               plot_borders=True)
+
+            # Plot the difference to the first time period
+            vmin = -0.01 if sname == 'solar' else -0.05
+            gplt.plot_map(cap_fac - cf_0,
+                          ax=im_diff['ax'][(tr_idx)*ncols + idx],
                           title=sname if tr_idx == 0 else None,
                           vertical_title=vertical_title if idx == 0 else None,
-                          cmap='cmo.solar',
-                          vmin=0,
-                          vmax=.15 if sname == 'solar' else 0.4,
-                          label='Capacity Factor [a.u.]' if tr_idx == nrows -
-                          1 else None,
+                          vmin=vmin,
+                          vmax=-vmin,
+                          cmap='cmo.tarn_r',
+                          centercolor='white',
+                          label=f'Difference CF ({sd} - {ed}) [a.u.]' if tr_idx == nrows - 1
+                          else None,
                           plot_borders=True)
-            # Plot the difference to the first time period
-            if tr_idx > 0:
-                vmin = -0.02 if sname == 'solar' else -0.05
-                gplt.plot_map(cap_fac - cf_0,
-                              ax=im_diff['ax'][(tr_idx-1)*ncols + idx],
-                              title=sname if tr_idx == 1 else None,
-                              vertical_title=vertical_title if idx == 0 else None,
-                              vmin=vmin,
-                              vmax=-vmin,
-                              cmap='cmo.tarn_r',
-                              centercolor='white',
-                              label=f'Difference CF ({sd} - {ed}) [a.u.]' if tr_idx == nrows - 1
-                              else None,
-                              plot_borders=True)
 
 
-savepath = f"{config['plot_dir']}/capacities_era5/cf_types_full_era5_{gs}.png"
-gplt.save_fig(savepath, fig=im['fig'])
-savepath_diff = f"{config['plot_dir']}/capacities_era5/cf_types_diff_era5_{gs}.png"
+
+
+savepath = f"{config['plot_dir']}/capacities_era5/cf_types_full_era5_{fine_res}.png"
+# gplt.save_fig(savepath, fig=im['fig'])
+savepath_diff = f"{config['plot_dir']}/capacities_era5/cf_types_diff_era5_{fine_res}.png"
 gplt.save_fig(savepath_diff, fig=im_diff['fig'])
 
 # %%
@@ -227,7 +244,7 @@ im = gplt.plot_2d(x=data_arr[0].time,
                   set_grid=True,
                   ylim=(0, 1),
                   )
-savepath = f"{config['plot_dir']}/capacities_era5/{ts_type}_{gs}_{sd}_{ed}_capacity_factor_per_day.png"
+savepath = f"{config['plot_dir']}/capacities_era5/{ts_type}_{fine_res}_{sd}_{ed}_capacity_factor_per_day.png"
 gplt.save_fig(savepath, fig=im['fig'])
 # %%
 reload(gplt)
@@ -277,12 +294,13 @@ for tr_str, cf_dict in cf_dict_tr.items():
                       ax=im['ax'],
                       color_arr=colors,
                       )
-    savepath = f"{config['plot_dir']}/capacities_era5/{ts_type}_{gs}_{tr_str}_cf_time_period.png"
+    savepath = f"{config['plot_dir']}/capacities_era5/{ts_type}_{fine_res}_{tr_str}_cf_time_period.png"
     gplt.save_fig(savepath, fig=im['fig'])
 
 # %%
 # Compare actual capacity factors with modelled
-
+tr_str = '1980-01-01_2025-01-01'
+cf_dict = cf_dict_tr[tr_str]
 window = 4
 ts_type = 'ts'
 for name, cf in cf_dict.items():
@@ -303,7 +321,7 @@ for name, cf in cf_dict.items():
     sd, ed = tu.get_time_range(ts_mean, asstr=True)
     im = gplt.plot_2d(x=data_arr[0].time,
                       y=data_arr,
-                      figsize=(10, 3),
+                      fifine_resize=(10, 3),
                       title=f"Corr CF ({sd} - {ed}) = {corr:.2f}",
                       label_arr=[f"{name} Model", f"{name} OPSD"],
                       color_arr=['blue', 'red', 'black'],
@@ -312,15 +330,17 @@ for name, cf in cf_dict.items():
                       ylim=(0, .4) if name == 'solar' else (0, 1),
                       )
 
-    savepath = f"{config['plot_dir']}/opsd_era5/{ts_type}_{gs}_compare_corr_cfs_true_cfs_{name}_{sd}_{ed}_day.png"
+    savepath = f"{config['plot_dir']}/opsd_era5/{ts_type}_{fine_res}_compare_corr_cfs_true_cfs_{name}_{sd}_{ed}_day.png"
     gplt.save_fig(savepath, fig=im['fig'])
 
 
 # %%
 # Compare the distribution of capacity factors for the corrected and uncorrected data
 reload(gplt)
+tr_str = '1980-01-01_2025-01-01'
+cf_dict = cf_dict_tr[tr_str]
 im = gplt.create_multi_plot(nrows=1, ncols=3,
-                            figsize=(30, 5))
+                            fifine_resize=(30, 5))
 labels = ['Uncorrected', 'QM - Corrected', 'GT (OPSD)']
 cf_dict = cf_dict_tr['1980-01-01_2025-01-01']  # Use the latest time range
 for idx, (name, cf) in enumerate(cf_dict.items()):
@@ -348,6 +368,6 @@ for idx, (name, cf) in enumerate(cf_dict.items()):
                        )
 
 
-savepath = f"{config['plot_dir']}/opsd_era5/{country_name}_{gs}_compare_cf_distributions.png"
+savepath = f"{config['plot_dir']}/opsd_era5/{country_name}_{fine_res}_compare_cf_distributions.png"
 gplt.save_fig(savepath, fig=im['fig'])
 # %%

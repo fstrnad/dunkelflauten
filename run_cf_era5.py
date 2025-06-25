@@ -1,34 +1,28 @@
 # %%
 import cf_utils as cfu
-import geoutils.utils.met_utils as mut
-import geoutils.geodata.solar_radiation as sr
-import workaround_fsr as wf
-import geoutils.utils.statistic_utils as sut
-from scipy import stats
-import pandas as pd
-import numpy as np
-import xarray as xr
 import geoutils.preprocessing.open_nc_file as of
-import geoutils.plotting.plots as gplt
 import geoutils.utils.time_utils as tu
-import geoutils.utils.spatial_utils as sput
 import geoutils.utils.general_utils as gut
 import geoutils.utils.file_utils as fut
 import atlite as at
 from importlib import reload
-import geoutils.countries.countries as cnt
-import geoutils.countries.capacities as cap
-import geoutils.cutouts.prepare_cutout as pc
-
+import os
 import yaml
-with open('./config.yaml', 'r') as file:
-    config = yaml.safe_load(file)
-
 # %%
-plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
-data_dir = "/home/strnad/data/CMIP6/downscaling/"
-cmip6_dir = "/home/strnad/data/CMIP6/"
-era5_dir = "/home/strnad/data/climate_data/Europe"
+if os.getenv("HOME") == '/home/ludwig/fstrnad80':
+    cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
+    data_dir = f'{cmip6_dir}/downscaling/'
+    era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
+    with open('./config_cluster.yaml', 'r') as file:
+        config = yaml.safe_load(file)
+else:
+    plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
+    data_dir = "/home/strnad/data/CMIP6/downscaling/"
+    cmip6_dir = "/home/strnad/data/CMIP6/"
+    era5_dir = "/home/strnad/data/climate_data/Europe"
+    with open('./config.yaml', 'r') as file:
+        config = yaml.safe_load(file)
+
 # %%
 reload(of)
 reload(gut)
@@ -39,14 +33,15 @@ gs_dws = 1.0
 fine_res = 0.25
 coarse_res = 1.0
 N = 3
-gcm = 'GFDL-ESM4'
-gcm = 'MPI-ESM1-2-HR'
+
 tr_historical = [
-    ('1980-01-01', '1990-01-01'),
-    ('1990-01-01', '2000-01-01'),
-    ('2000-01-01', '2010-01-01'),
-    ('2010-01-01', '2015-01-01'),
-    ('1980-01-01', '2025-01-01'),]
+    ('2023-01-01', '2025-01-01'),
+    # ('1980-01-01', '2025-01-01'),
+    # ('1980-01-01', '1990-01-01'),
+    # ('1990-01-01', '2000-01-01'),
+    # ('2000-01-01', '2010-01-01'),
+    # ('2010-01-01', '2015-01-01'),
+    ]
 
 variables = [
     '10m_u_component_of_wind',
@@ -69,7 +64,15 @@ for variable in variables:
 
 ds_era5_fine = of.open_nc_file(files_gt).load()
 ds_era5_coarse = of.open_nc_file(files_coarse).load()
-
+ds_era5_daily = tu.compute_timemean(ds=ds_era5_fine, timemean='day')
+# %%
+tr = '2023-01-01_2025-01-01'
+N = 10
+folder_name = f'{tr}_N{N}'
+use_log = False
+ds_era5_ds_path = f'/mnt/lustre/home/ludwig/fstrnad80/data/dunkelflauten/downscaling/eval_with_gt/{folder_name}/samples_era5_{tr}_{fine_res}_log_{use_log}.nc'
+ds_era5_ds_samples = of.open_nc_file(ds_era5_ds_path).load()
+ds_era5_ds = ds_era5_ds_samples.mean(dim='sample_id')
 # %%
 reload(cfu)
 time_ranges = tr_historical
@@ -78,16 +81,30 @@ for (start_date, end_date) in time_ranges:
     tr_str = f'{start_date}_{end_date}'
 
     savepath_dict_fine = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{fine_res}_{tr_str}.npy'
+    savepath_dict_fine_ds = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{fine_res}_{tr_str}_dws.npy'
     savepath_dict_coarse = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{coarse_res}_{tr_str}.npy'
+    savepath_dict_daily = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_daily_{fine_res}_{tr_str}.npy'
+
+    savepaths_gt = [savepath_dict_fine,
+                    savepath_dict_coarse,
+                    savepath_dict_daily]
+    savepaths_ds = [savepath_dict_fine_ds] + savepaths_gt
+
+    savepaths = savepaths_gt if tr_str != '2023-01-01_2025-01-01' else savepaths_ds
 
     gut.myprint(f'time range {tr_str}')
-    for savepath_dict in [savepath_dict_fine,
-                          savepath_dict_coarse]:
-        if fut.exist_file(savepath_dict):
-            ds_era5_tr = tu.get_time_range_data(
-                ds_era5_fine, time_range=(start_date, end_date))
-
-            savepath_cutout = f'{config['data_dir']}/{country_name}/{config['data']['ERA5']}_{fine_res}_{tr_str}.nc' if savepath_dict == savepath_dict_fine else f'{config['data_dir']}/{country_name}/{config['data']['ERA5']}_{coarse_res}_{tr_str}.nc'
+    for savepath_dict in savepaths:
+        if not fut.exist_file(savepath_dict):
+            if savepath_dict == savepath_dict_fine:
+                ds_era5_tr = tu.get_time_range_data(
+                    ds_era5_fine, time_range=(start_date, end_date))
+            elif savepath_dict == savepath_dict_coarse:
+                ds_era5_tr = tu.get_time_range_data(
+                    ds_era5_coarse, time_range=(start_date, end_date))
+            else:
+                ds_era5_tr = tu.get_time_range_data(
+                    ds_era5_daily, time_range=(start_date, end_date))
+            savepath_cutout = f'{config['data_dir']}/{country_name}/{config['data']['ERA5']}_cutout_tmp.nc'
 
             ds_cutout = cfu.compute_cutouts(ds=ds_era5_tr)
 
@@ -101,7 +118,8 @@ for (start_date, end_date) in time_ranges:
                 cutout_country=cutout_germany,
                 config=config,
                 country_name=country_name,
-                correct_qm=True)
+                correct_qm=True if tr_str != '2023-01-01_2025-01-01' else False,
+                )
 
-            fut.save_np_dict(cf_dict_cmip, savepath_dict,)
+            fut.save_np_dict(cf_dict_cmip, savepath_dict)
 # %%
