@@ -72,11 +72,12 @@ folder_name = f'{tr}_N{N}'
 use_log = False
 ds_era5_ds_path = f'/mnt/lustre/home/ludwig/fstrnad80/data/dunkelflauten/downscaling/eval_with_gt/{folder_name}/samples_era5_{tr}_{fine_res}_log_{use_log}.nc'
 ds_era5_ds_samples = of.open_nc_file(ds_era5_ds_path).load()
-ds_era5_ds = ds_era5_ds_samples.mean(dim='sample_id')
+# ds_era5_ds = ds_era5_ds_samples.mean(dim='sample_id')
+ds_era5_ds = ds_era5_ds_samples.sel(sample_id=0)
 # %%
 reload(cfu)
 time_ranges = tr_historical
-
+overwrite = True  # Set to True to overwrite existing files
 for (start_date, end_date) in time_ranges:
     tr_str = f'{start_date}_{end_date}'
 
@@ -94,13 +95,16 @@ for (start_date, end_date) in time_ranges:
 
     gut.myprint(f'time range {tr_str}')
     for savepath_dict in savepaths:
-        if not fut.exist_file(savepath_dict):
+        if not fut.exist_file(savepath_dict) or overwrite:
             if savepath_dict == savepath_dict_fine:
                 ds_era5_tr = tu.get_time_range_data(
                     ds_era5_fine, time_range=(start_date, end_date))
             elif savepath_dict == savepath_dict_coarse:
                 ds_era5_tr = tu.get_time_range_data(
                     ds_era5_coarse, time_range=(start_date, end_date))
+            elif savepath_dict == savepath_dict_fine_ds:
+                ds_era5_tr = tu.get_time_range_data(
+                    ds_era5_ds, time_range=(start_date, end_date))
             else:
                 ds_era5_tr = tu.get_time_range_data(
                     ds_era5_daily, time_range=(start_date, end_date))
@@ -122,4 +126,5 @@ for (start_date, end_date) in time_ranges:
                 )
 
             fut.save_np_dict(cf_dict_cmip, savepath_dict)
+            break
 # %%

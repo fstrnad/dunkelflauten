@@ -80,7 +80,7 @@ cf_dicts = {
 reload(gplt)
 reload(cfu)
 reload(tu)
-sources = ['onwind', 'solar', ]
+sources = ['offwind', 'solar', ]
 ncols = len(cf_dicts)
 nrows = len(sources) + 1
 im_cfs = gplt.create_multi_plot(
@@ -132,13 +132,13 @@ for idx, (res, cf_dict_cmip) in enumerate(cf_dicts.items()):
                   plot_borders=True,
                   significance_mask=xr.where(mask, 0, 1),
                   vmin=3,
-                  vmax=23,
+                  vmax=18,
                   label='No. of Dunkelflauten / Year',
                 #   title=title,
                   vertical_title=f'No. of Dunkelflaute events \n{sd} - {ed}' if idx == 0 else None,
                   cmap='cmo.amp',
                   leftcolor='white',
-                  levels=20,
+                  levels=15,
                   tick_step=5
                   )
 

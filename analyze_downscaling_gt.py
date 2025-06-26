@@ -103,7 +103,6 @@ timemean = None
 im = gplt.create_multi_plot(nrows=nrows,
                             ncols=len(variables) // nrows,
                             figsize=(15, 10),
-                            title=f'Distribution for ERA5 ({sd_str}-{ed_str})',
                             y_title=1.,
                             hspace=0.5)
 
