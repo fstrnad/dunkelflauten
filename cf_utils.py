@@ -1,5 +1,4 @@
 import cmethods as cm
-import geoutils.bias_correction.quantile_mapping as qm
 import geoutils.geodata.solar_radiation as sr
 import workaround_fsr as wf
 import geoutils.utils.statistic_utils as sut
@@ -74,6 +73,32 @@ feature_dict = {
 }
 
 
+def get_toa(ds):
+    ds_vars = gut.get_vars(ds)
+    gs = sput.get_grid_step(ds)[0]
+    ntimes = ds.sizes['time']
+    time = ds.time
+    sd, ed = tu.get_time_range(time, asstr=True)
+    if 'toa_incident_solar_radiation' not in ds_vars:
+        reload(sr)
+        toa_file = f'toa_incident_solar_radiation/toa_{sd}_{ed}_gs{gs}_tsteps{ntimes}.nc'
+        if fut.exist_file(toa_file):
+            gut.myprint(f'Loading toa_incident_solar_radiation from {toa_file}')
+            toa = of.open_nc_file(toa_file)
+        else:
+            gut.myprint(
+                f'Computing toa_incident_solar_radiation  with grid step {gs} and time steps {ntimes}')
+            toa = sr.get_toa_incident_solar_radiation_for_xarray(
+                data_array_like=ds)
+            toa.name = 'toa_incident_solar_radiation'
+            fut.save_ds(ds=toa, filepath=toa_file)
+
+        return toa
+    else:
+        gut.myprint('toa_incident_solar_radiation already in dataset')
+        return ds['toa_incident_solar_radiation']
+
+
 def compute_cutouts(ds, simple=True,
                     features=['influx', 'wind'],
                     savepath=None):
@@ -81,14 +106,10 @@ def compute_cutouts(ds, simple=True,
     ds_vars = gut.get_vars(ds)
     gs = sput.get_grid_step(ds)[0]
     ntimes = ds.sizes['time']
-
-    if 'toa_incident_solar_radiation' not in ds_vars:
-        reload(sr)
-        gut.myprint(
-            f'Computing toa_incident_solar_radiation  with grid step {gs} and time steps {ntimes}')
-        toa = sr.get_toa_incident_solar_radiation_for_xarray(
-            data_array_like=ds)
-        ds['toa_incident_solar_radiation'] = toa
+    time = ds.time
+    sd, ed = tu.get_time_range(time, asstr=True)
+    toa = get_toa(ds)
+    ds['toa_incident_solar_radiation'] = toa
 
     if 'forecast_surface_roughness' not in ds_vars:
         reload(wf)
