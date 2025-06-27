@@ -70,10 +70,16 @@ tr = '2023-01-01_2025-01-01'
 N = 10
 folder_name = f'{tr}_N{N}'
 use_log = False
-ds_era5_ds_path = f'/mnt/lustre/home/ludwig/fstrnad80/data/dunkelflauten/downscaling/eval_with_gt/{folder_name}/samples_era5_{tr}_{fine_res}_log_{use_log}.nc'
-ds_era5_ds_samples = of.open_nc_file(ds_era5_ds_path).load()
+ds_era5_ds_path = f'/mnt/lustre/home/ludwig/fstrnad80/data/dunkelflauten/downscaling/eval_with_gt/{folder_name}/'
+ds_era5_file = f'{ds_era5_ds_path}/samples_era5_{tr}_{fine_res}_log_{use_log}.nc'
+ds_era5_ds_samples = of.open_nc_file(ds_era5_file)
+ds_era5_ds_samples.load()
 # ds_era5_ds = ds_era5_ds_samples.mean(dim='sample_id')
 ds_era5_ds = ds_era5_ds_samples.sel(sample_id=0)
+
+ds_era5_file_bc = f'{ds_era5_ds_path}/samples_era5_{tr}_{fine_res}_log_{use_log}_bc.nc'
+ds_era5_ds_bc_samples = of.open_nc_file(ds_era5_file_bc)
+ds_era5_ds_bc_samples.load()
 # %%
 reload(cfu)
 time_ranges = tr_historical
@@ -83,13 +89,15 @@ for (start_date, end_date) in time_ranges:
 
     savepath_dict_fine = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{fine_res}_{tr_str}.npy'
     savepath_dict_fine_ds = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{fine_res}_{tr_str}_dws.npy'
+    savepath_dict_fine_ds_bc = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{fine_res}_{tr_str}_dws_bc.npy'
     savepath_dict_coarse = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{coarse_res}_{tr_str}.npy'
     savepath_dict_daily = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_daily_{fine_res}_{tr_str}.npy'
 
     savepaths_gt = [savepath_dict_fine,
                     savepath_dict_coarse,
                     savepath_dict_daily]
-    savepaths_ds = [savepath_dict_fine_ds] + savepaths_gt
+    savepaths_ds = [savepath_dict_fine_ds,
+                    savepath_dict_fine_ds_bc] + savepaths_gt
 
     savepaths = savepaths_gt if tr_str != '2023-01-01_2025-01-01' else savepaths_ds
 
@@ -105,6 +113,9 @@ for (start_date, end_date) in time_ranges:
             elif savepath_dict == savepath_dict_fine_ds:
                 ds_era5_tr = tu.get_time_range_data(
                     ds_era5_ds, time_range=(start_date, end_date))
+            elif savepath_dict == savepath_dict_fine_ds_bc:
+                ds_era5_tr = tu.get_time_range_data(
+                    ds_era5_ds_bc_samples, time_range=(start_date, end_date))
             else:
                 ds_era5_tr = tu.get_time_range_data(
                     ds_era5_daily, time_range=(start_date, end_date))
@@ -126,5 +137,5 @@ for (start_date, end_date) in time_ranges:
                 )
 
             fut.save_np_dict(cf_dict_cmip, savepath_dict)
-            break
+            # break
 # %%

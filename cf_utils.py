@@ -73,24 +73,26 @@ feature_dict = {
 }
 
 
-def get_toa(ds):
+def get_toa(ds, toa_name='toa_incident_solar_radiation'):
     ds_vars = gut.get_vars(ds)
     gs = sput.get_grid_step(ds)[0]
     ntimes = ds.sizes['time']
     time = ds.time
     sd, ed = tu.get_time_range(time, asstr=True)
-    if 'toa_incident_solar_radiation' not in ds_vars:
+    if toa_name not in ds_vars:
         reload(sr)
-        toa_file = f'toa_incident_solar_radiation/toa_{sd}_{ed}_gs{gs}_tsteps{ntimes}.nc'
+        toa_file = f'{toa_name}/toa_{sd}_{ed}_gs{gs}_tsteps{ntimes}.nc'
         if fut.exist_file(toa_file):
-            gut.myprint(f'Loading toa_incident_solar_radiation from {toa_file}')
-            toa = of.open_nc_file(toa_file)
+            gut.myprint(
+                f'Loading {toa_name} from {toa_file}')
+            toa_ds = of.open_nc_file(toa_file)
+            toa = toa_ds[f'{toa_name}']
         else:
             gut.myprint(
-                f'Computing toa_incident_solar_radiation  with grid step {gs} and time steps {ntimes}')
+                f'Computing {toa_name} with grid step {gs} and time steps {ntimes}')
             toa = sr.get_toa_incident_solar_radiation_for_xarray(
                 data_array_like=ds)
-            toa.name = 'toa_incident_solar_radiation'
+            toa.name = toa_name
             fut.save_ds(ds=toa, filepath=toa_file)
 
         return toa

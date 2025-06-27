@@ -1,9 +1,11 @@
 # %%
+import geoutils.utils.met_utils as mut
 import geoutils.utils.statistic_utils as sut
 import geopandas as gpd
 import pandas as pd
 import numpy as np
 import xarray as xr
+import cmethods as cm
 import geoutils.geodata.wind_dataset as wds
 import geoutils.preprocessing.open_nc_file as of
 import geoutils.plotting.plots as gplt
@@ -15,12 +17,24 @@ import geoutils.utils.file_utils as fut
 import geoutils.plotting.plots as gplt
 import geoutils.preprocessing.open_nc_file as of
 from importlib import reload
+import os
+import yaml
+# %%
+if os.getenv("HOME") == '/home/ludwig/fstrnad80':
+    cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
+    data_dir = f'/mnt/lustre/home/ludwig/fstrnad80/data/dunkelflauten/downscaling/'
+    era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
+    with open('./config_cluster.yaml', 'r') as file:
+        config = yaml.safe_load(file)
+    plot_dir = "/mnt/lustre/home/ludwig/fstrnad80/plots/dunkelflauten/downscaling_cmip6/"
 
-
-plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_gt/"
-data_dir = "/home/strnad/data/dunkelflauten/downscaling/"
-cmip6_dir = "/home/strnad/data/CMIP6/"
-era5_dir = "/home/strnad/data/climate_data/Europe"
+else:
+    plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
+    data_dir = "/home/strnad/data/CMIP6/downscaling/"
+    cmip6_dir = "/home/strnad/data/CMIP6/"
+    era5_dir = "/home/strnad/data/climate_data/Europe"
+    with open('./config.yaml', 'r') as file:
+        config = yaml.safe_load(file)
 
 locations = {'Berlin': (13.404954, 52.520008),
              'Alps': (10, 47.2),
@@ -28,6 +42,30 @@ locations = {'Berlin': (13.404954, 52.520008),
              'Munich': (11.5761, 48.1371),
              'Cologne': (6.9603, 50.9375), }
 locs = np.array(list(locations.values()))
+# %%
+gs_era5 = 0.25  # resolution of the CMIP data
+hourly_res = 6  # hourly resolution of the data
+country_name = 'Germany'
+used_variables = ['uas',
+                  'vas',
+                  'tas',
+                  'rsds',
+                  ]
+
+era5_files = []
+for var_cmip in used_variables:
+    variable = gut.cmip2era5_dict[var_cmip]
+    era5_file = f'{era5_dir}/{country_name}_nn/{gs_era5}/{variable}_{gs_era5}_{hourly_res}h.nc'
+    if not fut.exist_file(era5_file):
+        gut.myprint(f'File {era5_file} does not exist!')
+        continue
+    else:
+        era5_files.append(era5_file)
+        gut.myprint(f'Using file {era5_file} for {variable}')
+
+# opens the ERA5 Ground truth data
+ds_era5 = of.open_nc_file(era5_files)
+ds_era5.load()
 # %%
 reload(of)
 tr = '2023-01-01_2025-01-01'
@@ -50,10 +88,44 @@ variables = gut.get_vars(ds_samples)
 lon_range, lat_range = sput.get_lon_lat_range(ds_samples)
 
 short_time_range = ['2023-01-01', '2023-01-31']
+ds_samples.load()
+ds_gt.load()
+ds_obs.load()
+# %%
+# do bias correction on the ground truth data
+files = []
+for var_cmip in used_variables:
+    var_era5 = gut.cmip2era5_dict[var_cmip]
+    sample_var = ds_samples[var_era5].mean(dim='sample_id')
+    obs_data = ds_era5[var_era5]
+    hist_mod_data = sample_var
+    fut_mod_data = sample_var
+    obs_data, hist_mod_data = tu.equalize_time_points(
+        obs_data, hist_mod_data
+    )
 
+    qm_results = cm.adjust(
+        method="quantile_delta_mapping" if var_cmip in [
+            'tas', 'rsds'] else "quantile_mapping",
+        obs=obs_data,
+        simh=hist_mod_data,
+        simp=fut_mod_data,
+        n_quantiles=10000,
+        kind="+",
+    )
+    files.append(qm_results)
+ds_obs_bc = xr.merge(files)
+# %%
+era_5_file_bc = f'{data_dir}/eval_with_gt/{folder_name}/samples_era5_{data_str}_{fine_res}_log_{use_log}_bc.nc'
+fut.save_ds(ds=ds_obs_bc,
+            filepath=era_5_file_bc)
+
+# %%
 ds_dict = {'samples': ds_samples.load(),
-           'gt': ds_gt.load(),
-           'obs': ds_obs.load(), }
+           'ground truth ERA5': ds_gt.load(),
+           'coarse ERA5': ds_obs.load(),
+           'samples bc': ds_obs_bc.load(),
+           }
 
 variable_dict = {
     '2m_temperature': dict(
@@ -77,6 +149,13 @@ variable_dict = {
         offset=0,
         levels=20,
         vname='10m V Component of Wind',),
+    '10m_wind_speed': dict(
+        cmap='viridis',
+        vmin=-13, vmax=13,
+        label='Wind speed [m/s]',
+        offset=0,
+        levels=20,
+        vname='Windspeed',),
     'surface_solar_radiation_downwards': dict(
         cmap='inferno',
         vmin=0, vmax=1.5e6,
@@ -174,7 +253,7 @@ for idx, variable in enumerate(variables):
                      title=variable,
                      ax=im['ax'][idx],
                      label=ds_type,
-                     color=gplt.colors[i+1],
+                     color=colors[i],
                      rot=90)
 
 savepath = f'{plot_dir}/time_series/spatial_mean_ts_{tr_str}.png'
@@ -213,6 +292,66 @@ for idx, variable in enumerate(variables):
 
 savepath = f'{plot_dir}/mean_deviation_pixelwise_{tr_dev}.png'
 gplt.save_fig(savepath=savepath)
+# %%
+# Compare the yearly mean values for the wind speeds
+reload(gplt)
+
+ds_dicts = {
+    'ground truth ERA5': ds_gt,
+    'samples bc': ds_obs_bc,
+    'samples': ds_samples.mean(dim='sample_id'),
+    'coarse ERA5': ds_obs,
+    'daily ERA5': tu.compute_timemean(ds_era5, timemean='day'),
+}
+# %%
+variables = ['10m_u_component_of_wind',
+             '10m_v_component_of_wind',
+             '10m_wind_speed',]
+reload(mut)
+ncols = len(ds_dicts)
+nrows = len(variables)
+im_cfs = gplt.create_multi_plot(
+    nrows=nrows, ncols=ncols,
+    hspace=0.4,
+    projection='PlateCarree')
+
+vmin = -4
+vmax = -vmin
+
+short_time_range = ['2023-06-01', '2023-06-03']
+for idx, (dict_name, ds_dict) in enumerate(ds_dicts.items()):
+    ds_dict_short = tu.get_time_range_data(
+        ds_dict, time_range=short_time_range)
+    hourly_res = tu.get_frequency_resolution_hours(ds_dict_short)
+    res, _, _ = sput.get_grid_step(ds_dict_short)
+    title = f'{dict_name} ({res}°, {hourly_res}h)'
+
+    for s, variable in enumerate(variables):
+        if variable == '10m_wind_speed':
+            da_var = mut.compute_windspeed(
+                u=ds_dict_short['10m_u_component_of_wind'],
+                v=ds_dict_short['10m_v_component_of_wind'])
+        else:
+            da_var = ds_dict_short[variable]
+        sd, ed = tu.get_time_range(
+            ds_dict_short, asstr=True, m=True, d=True)
+        tr_str = f'{sd}_{ed}'
+        time_mean = da_var.mean(dim='time')
+        gplt.plot_map(time_mean,
+                      ax=im_cfs['ax'][s*ncols + idx],
+                      title=title if s == 0 else None,
+                      vertical_title=f'{variable_dict[variable]['vname']} \n{sd} - {ed}' if idx == 0 else None,
+                      y_title=1.2,
+                      vmin=vmin,
+                      vmax=vmax,
+                      cmap='cmo.thermal',
+                      label='windspeed [m/s]',
+                      plot_borders=True)
+
+
+savepath_winds = f"{config['plot_dir']}/impact_downscaling/compare_winds_ERA5_{tr_str}_{res}.png"
+
+gplt.save_fig(savepath_winds, fig=im_cfs['fig'])
 
 # %%
 # Single locations

@@ -66,6 +66,7 @@ gcms = [
 overwrite = False  # Set to True if you want to overwrite existing files
 use_bc = True  # Set to True if you want to use bias-corrected data
 # %%
+reload(cfu)
 for gcm in gcms:
     for ssp in ssps:
         time_ranges = tr_historical if ssp == 'historical' else tr_ssp

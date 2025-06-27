@@ -83,7 +83,7 @@ ssps = [
     'ssp245',
     'ssp585'
 ]
-
+use_bc = True  # use bias correction for downscaling
 gcm_ssp_cf_dict = {}
 for gcm in gcms:
     ssp_cf_dict = {}
@@ -94,7 +94,10 @@ for gcm in gcms:
         tr_str = f'{start_date}_{end_date}'
 
         reload(cfu)
-        savepath_dict = f'{config['data_dir']}/{country_name}/CMIP6/cf/cf_dict_{gcm_str}_{fine_res}_{tr_str}.npy'
+        if use_bc:
+            savepath_dict = f'{config['data_dir']}/{country_name}/CMIP6/cf/cf_dict_{gcm_str}_{fine_res}_{tr_str}_bc.npy'
+        else:
+            savepath_dict = f'{config['data_dir']}/{country_name}/CMIP6/cf/cf_dict_{gcm_str}_{fine_res}_{tr_str}.npy'
         if fut.exist_file(savepath_dict):
             cf_dict_cmip = fut.load_np_dict(savepath_dict)
         else:
@@ -222,6 +225,7 @@ for gcm in gcms:
 reload(tu)
 gcm = 'MPI-ESM1-2-HR'
 ssp_cf_dict = gcm_ssp_cf_dict['MPI-ESM1-2-HR']
+df_type = 'all'
 
 for ssp, cf_dict_cmip in ssp_cf_dict.items():
     gcm_str = f'{gcm}_{ssp}'
@@ -535,7 +539,7 @@ gplt.save_fig(savepath, fig=im_df['fig'])
 # %%
 dfs_per_year_era5 = local_dfs_per_year(df_dict_local['ERA5'])
 
-vmin = -15
+vmin = -20
 ncols = len(ssps)
 im_df = gplt.create_multi_plot(
     nrows=2, ncols=ncols,
@@ -564,7 +568,7 @@ for idx_ssp, ssp in enumerate(ssps):
                   cmap='cmo.balance',
                   centercolor='white',
                   levels=20,
-                  tick_step=5,
+                  tick_step=4,
                   y_title=1.2,
                   )
 
@@ -581,7 +585,7 @@ for idx_ssp, ssp in enumerate(ssps):
                   tick_step=5,
                   levels=25,
                   )
-savepath = f"{config['plot_dir']}/local_risks/CMIP6/df_local_compare_ensemble_era5_{ssp}_{gs_dws}_{threshold}.png"
+savepath = f"{config['plot_dir']}/local_risks/CMIP6/df_local_compare_ensemble_era5_{gs_dws}_{threshold}.png"
 
 gplt.save_fig(savepath)
 # %%

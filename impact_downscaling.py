@@ -61,19 +61,22 @@ tr_str = f'{start_date}_{end_date}'
 # %%
 savepath_dict_fine_gt = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{fine_res}_{tr_str}.npy'
 savepath_dict_fine = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{fine_res}_{tr_str}_dws.npy'
+savepath_dict_fine_bc = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{fine_res}_{tr_str}_dws_bc.npy'
 savepath_dict_coarse = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{coarse_res}_{tr_str}.npy'
 savepath_dict_daily = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_daily_{fine_res}_{tr_str}.npy'
 
 cf_era5_fine_gt = fut.load_np_dict(savepath_dict_fine_gt)
 cf_era5_fine = fut.load_np_dict(savepath_dict_fine)
+cf_era5_fine_bc = fut.load_np_dict(savepath_dict_fine_bc)
 cf_era5_coarse = fut.load_np_dict(savepath_dict_coarse)
 cf_era5_daily = fut.load_np_dict(savepath_dict_daily)
 cf_dicts = {
     f'GT {fine_res}': cf_era5_fine_gt,
-    fine_res: cf_era5_fine,
-    coarse_res: cf_era5_coarse,
-    'daily': cf_era5_daily
-}
+    f'Coarse {coarse_res}': cf_era5_coarse,
+    'daily': cf_era5_daily,
+    f'DS {fine_res}': cf_era5_fine,
+    f'DS BC {fine_res}': cf_era5_fine_bc,
+    }
 
 # %%
 # Local dunkelflauten Germany
@@ -87,6 +90,8 @@ im_cfs = gplt.create_multi_plot(
     nrows=nrows, ncols=ncols,
     hspace=0.4,
     projection='PlateCarree')
+
+threshold = 0.015
 
 
 for idx, (res, cf_dict_cmip) in enumerate(cf_dicts.items()):
@@ -105,10 +110,12 @@ for idx, (res, cf_dict_cmip) in enumerate(cf_dicts.items()):
                       title=title if s == 0 else None,
                       vertical_title=f'{sname} capacity factor \n{sd} - {ed}' if idx == 0 else None,
                       y_title=1.2,
-                      vmin=0.1,
                       cmap='cmo.thermal',
+                      levels=25,
+                      tick_step=5,
                       label='Capacity Factor [a.u.]',
-                      vmax=.15 if sname == 'solar' else 0.35,
+                      vmin=0.08 if  sname == 'solar' else 0.0,
+                      vmax=.14 if sname == 'solar' else 0.3,
                       plot_borders=True)
 
     cf_onwind_solar = cfu.combined_cf_maps(cf_dict_cmip,
@@ -118,7 +125,6 @@ for idx, (res, cf_dict_cmip) in enumerate(cf_dicts.items()):
 
     window = int(num_hours / hourly_res)  # 8*6 = 48 hours
     cf_ts_mean = tu.rolling_timemean(cf_onwind_solar, window=window)
-    threshold = 0.02
     df_local_onwind, mask = tu.compute_evs(cf_ts_mean,
                                            threshold=threshold,
                                            threshold_type='lower',
@@ -142,6 +148,7 @@ for idx, (res, cf_dict_cmip) in enumerate(cf_dicts.items()):
                   tick_step=5
                   )
 
-savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res_ERA5_{tr_str}_{res}.png"
+savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res_ERA5_{tr_str}.png"
 
 gplt.save_fig(savepath_cfs, fig=im_cfs['fig'])
+# %%

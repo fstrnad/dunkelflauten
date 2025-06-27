@@ -87,20 +87,17 @@ for gcm in gcms:
     ssp_cf_dict = {}
     for ssp in ssps:
         gcm_str = f'{gcm}_{ssp}'
-        cf_tr_dict = {}
         time_ranges = tr_ssp if ssp != 'historical' else tr_historical
-        for tr_idx, (start_date, end_date) in enumerate(time_ranges):
-            start_date, end_date = time_ranges[tr_idx]
-            tr_str = f'{start_date}_{end_date}'
+        start_date, end_date = time_ranges[0]
+        tr_str = f'{start_date}_{end_date}'
 
-            reload(cfu)
-            savepath_dict = f'{config['data_dir']}/{country_name}/CMIP6/cf/cf_dict_{gcm_str}_{fine_res}_{tr_str}.npy'
-            if fut.exist_file(savepath_dict):
-                cf_dict_cmip = fut.load_np_dict(savepath_dict)
-                cf_tr_dict[tr_str] = cf_dict_cmip
-            else:
-                print(f'{gcm} {ssp} {tr_str} not found')
-        ssp_cf_dict[ssp] = cf_tr_dict
+        reload(cfu)
+        savepath_dict = f'{config['data_dir']}/{country_name}/CMIP6/cf/cf_dict_{gcm_str}_{fine_res}_{tr_str}.npy'
+        if fut.exist_file(savepath_dict):
+            cf_dict_cmip = fut.load_np_dict(savepath_dict)
+        else:
+            print(f'{gcm} {ssp} {tr_str} not found')
+        ssp_cf_dict[ssp] = cf_dict_cmip
     gcm_ssp_cf_dict[gcm] = ssp_cf_dict
 # %%
 # For comparison with ERA5
