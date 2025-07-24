@@ -26,10 +26,10 @@ if os.getenv("HOME") == '/home/ludwig/fstrnad80':
     era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
     with open('./config_cluster.yaml', 'r') as file:
         config = yaml.safe_load(file)
-    plot_dir = "/mnt/lustre/home/ludwig/fstrnad80/plots/dunkelflauten/downscaling_cmip6/"
+    plot_dir = "/mnt/lustre/home/ludwig/fstrnad80/plots/dunkelflauten/downscaling_gt/"
 
 else:
-    plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
+    plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_gt/"
     data_dir = "/home/strnad/data/CMIP6/downscaling/"
     cmip6_dir = "/home/strnad/data/CMIP6/"
     era5_dir = "/home/strnad/data/climate_data/Europe"
@@ -96,35 +96,43 @@ ds_obs.load()
 files = []
 for var_cmip in used_variables:
     var_era5 = gut.cmip2era5_dict[var_cmip]
-    sample_var = ds_samples[var_era5].mean(dim='sample_id')
-    obs_data = ds_era5[var_era5]
-    hist_mod_data = sample_var
-    fut_mod_data = sample_var
-    obs_data, hist_mod_data = tu.equalize_time_points(
-        obs_data, hist_mod_data
-    )
+    files_samples = []
+    for sid in ds_samples.sample_id.values:
+        gut.myprint(f'Processing variable {var_cmip} for sample {sid}')
+        sample_var = ds_samples[var_era5].sel(sample_id=sid)
 
-    qm_results = cm.adjust(
-        method="quantile_delta_mapping" if var_cmip in [
-            'tas', 'rsds'] else "quantile_mapping",
-        obs=obs_data,
-        simh=hist_mod_data,
-        simp=fut_mod_data,
-        n_quantiles=10000,
-        kind="+",
-    )
-    files.append(qm_results)
-ds_obs_bc = xr.merge(files)
+        # sample_var = ds_samples[var_era5].mean(dim='sample_id')
+        obs_data = ds_era5[var_era5]
+        hist_mod_data = sample_var
+        fut_mod_data = sample_var
+        obs_data, hist_mod_data = tu.equalize_time_points(
+            obs_data, hist_mod_data
+        )
+
+        # Apply bias correction
+        qm_results = cm.adjust(
+            method="quantile_delta_mapping" if var_cmip in [
+                'tas', 'rsds'] else "quantile_mapping",
+            obs=obs_data,
+            simh=hist_mod_data,
+            simp=fut_mod_data,
+            n_quantiles=10000,
+            kind="+",
+        )
+        files_samples.append(qm_results)
+    qm_results_samples = xr.concat(files_samples, dim='sample_id')
+    files.append(qm_results_samples)
+ds_samples_bc = xr.merge(files)
 # %%
 era_5_file_bc = f'{data_dir}/eval_with_gt/{folder_name}/samples_era5_{data_str}_{fine_res}_log_{use_log}_bc.nc'
-fut.save_ds(ds=ds_obs_bc,
+fut.save_ds(ds=ds_samples_bc,
             filepath=era_5_file_bc)
 
 # %%
-ds_dict = {'samples': ds_samples.load(),
-           'ground truth ERA5': ds_gt.load(),
-           'coarse ERA5': ds_obs.load(),
-           'samples bc': ds_obs_bc.load(),
+ds_dict = {'Coarse ERA5': ds_obs.load(),
+           'Ground Truth ERA5': ds_gt.load(),
+           'Samples': ds_samples.load(),
+           'Samples Bias Corrected': ds_samples_bc.load(),
            }
 
 variable_dict = {
@@ -185,7 +193,7 @@ im = gplt.create_multi_plot(nrows=nrows,
                             y_title=1.,
                             hspace=0.5)
 
-colors = ['red', 'blue', 'tab:blue', 'tab:green']
+colors = ['tab:green', 'red', 'tab:blue', 'blue']
 sv = 'surface_solar_radiation_downwards'
 for idx, variable in enumerate(variables):
     for i, (ds_type, ds) in enumerate(ds_dict.items()):
@@ -193,7 +201,7 @@ for idx, variable in enumerate(variables):
             ds, timemean=timemean)  # if variable == 'surface_solar_radiation_downwards' else ds
         plot_data = []
         offset = variable_dict[variable]['offset']
-        if ds_type == 'samples':
+        if ds_type == 'samples' or ds_type == 'samples bc':
             for sample_id in ds.sample_id.values:
                 plot_data.append(ds.sel(sample_id=sample_id)
                                  [variable].values.flatten() + offset)
@@ -202,12 +210,11 @@ for idx, variable in enumerate(variables):
 
         this_im = gplt.plot_hist(plot_data,
                                  ax=im['ax'][idx],
-                                 title=variable_dict[variable]['vname'],
+                                 title=variable_dict[variable]['vname'] if i==0 else None,
                                  color=colors[i],
-                                 label=ds_type,
+                                 label=ds_type if idx == 2 else None,
                                  nbins=100,
-                                 lw=1 if ds_type == 'samples' else 2,
-                                 alpha=0.8 if ds_type == 'samples' else 1,
+                                 lw=2,
                                  set_yaxis=False,
                                  ylim=variable_dict[variable]['yrange'] if variable == 'surface_solar_radiation_downwards' else None,
                                  ylabel='Density',
@@ -215,8 +222,11 @@ for idx, variable in enumerate(variables):
                                  xlabel=variable_dict[variable]['label'],
                                  xlim=(variable_dict[variable]['vmin'],
                                         variable_dict[variable]['vmax']),
+                                 loc='under',
+                                 ncol_legend=4,
+                                 box_loc=(0.2, -0.2)
                                  )
-        if ds_type == 'samples':
+        if ds_type == 'Ground Truth ERA5':
             gplt.fill_between(ax=this_im['ax'],
                               x=this_im['bc'],
                               y=this_im['hc'],
@@ -298,7 +308,7 @@ reload(gplt)
 
 ds_dicts = {
     'ground truth ERA5': ds_gt,
-    'samples bc': ds_obs_bc,
+    'samples bc': ds_samples_bc,
     'samples': ds_samples.mean(dim='sample_id'),
     'coarse ERA5': ds_obs,
     'daily ERA5': tu.compute_timemean(ds_era5, timemean='day'),

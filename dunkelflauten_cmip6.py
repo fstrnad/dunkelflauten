@@ -58,22 +58,6 @@ gcms = [
     'CanESM5'
 ]
 
-tr_historical = [
-    ('1980-01-01', '1990-01-01'),
-    ('1990-01-01', '2000-01-01'),
-    ('2000-01-01', '2010-01-01'),
-    ('2010-01-01', '2015-01-01')]
-
-tr_ssp = [
-    ('2020-01-01', '2030-01-01'),
-    ('2030-01-01', '2040-01-01'),
-    ('2040-01-01', '2050-01-01'),
-    ('2050-01-01', '2060-01-01'),
-    ('2060-01-01', '2070-01-01'),
-    ('2070-01-01', '2080-01-01'),
-    ('2080-01-01', '2090-01-01'),
-    ('2090-01-01', '2100-01-01')
-]
 
 tr_historical = [('1980-01-01', '2015-01-01')]  # full range
 tr_ssp = [('2020-01-01', '2100-01-01')]
@@ -416,7 +400,8 @@ im_df = gplt.create_multi_plot(
 )
 for idx, ssp in enumerate(ssps):
     dfs_per_year = local_dfs_per_year(df_dict_local[gcm][ssp])
-    sd, ed = tu.get_time_range(gcm_ssp_cf_dict[gcm][ssp]['all']['ts'], asstr=True, m=False, d=False)
+    sd, ed = tu.get_time_range(
+        gcm_ssp_cf_dict[gcm][ssp]['all']['ts'], asstr=True, m=False, d=False)
     gplt.plot_map(dfs_per_year,
                   ax=im_df['ax'][idx],
                   plot_borders=True,
@@ -479,13 +464,25 @@ for ssp, dfs in df_dict_local[gcm].items():
 # Average of dunkelflaute per year over multiple GCMs
 
 
-def get_gcm_average(ssp, df_dict_local):
+def get_gcm_average(ssp, df_dict_local, av_type='mean'):
     gcm_arr = []
     for gcm in gcms:
         dfs_per_year = local_dfs_per_year(df_dict_local[gcm][ssp])
         gcm_arr.append(dfs_per_year)
-    av_df_gcm = xr.concat(
-        gcm_arr, dim='gcm').mean(dim='gcm')
+    if av_type == 'mean':
+        av_df_gcm = xr.concat(
+            gcm_arr, dim='gcm').mean(dim='gcm')
+    elif av_type == 'median':
+        av_df_gcm = xr.concat(
+            gcm_arr, dim='gcm').median(dim='gcm')
+    elif av_type == 'max':
+        av_df_gcm = xr.concat(
+            gcm_arr, dim='gcm').max(dim='gcm')
+    elif av_type == 'min':
+        av_df_gcm = xr.concat(
+            gcm_arr, dim='gcm').min(dim='gcm')
+    else:
+        raise ValueError(f'Unknown average type: {av_type}')
     std_df_gcm = xr.concat(
         gcm_arr, dim='gcm').std(dim='gcm')
 
@@ -542,19 +539,27 @@ dfs_per_year_era5 = local_dfs_per_year(df_dict_local['ERA5'])
 vmin = -20
 ncols = len(ssps)
 im_df = gplt.create_multi_plot(
-    nrows=2, ncols=ncols,
+    nrows=4, ncols=ncols,
     projection='PlateCarree',
     hspace=0.5,
 )
 
 for idx_ssp, ssp in enumerate(ssps):
     av_dfs, std_dfs = get_gcm_average(ssp=ssp, df_dict_local=df_dict_local)
+    max_dfs, _ = get_gcm_average(ssp=ssp,
+                                 df_dict_local=df_dict_local,
+                                 av_type='max')
+    min_dfs, _ = get_gcm_average(ssp=ssp,
+                                 df_dict_local=df_dict_local,
+                                 av_type='min')
 
     sd, ed = tu.get_time_range(gcm_ssp_cf_dict[gcm][ssp]['all']['ts'],
                                asstr=True, m=False, d=False)
     tr = f'{sd}-{ed}'
 
     diff = av_dfs - dfs_per_year_era5
+    diff_max = max_dfs - dfs_per_year_era5
+    diff_min = min_dfs - dfs_per_year_era5
 
     gplt.plot_map(diff,
                   ax=im_df['ax'][idx_ssp],
@@ -564,7 +569,7 @@ for idx_ssp, ssp in enumerate(ssps):
                   vmax=-vmin,
                   label='No. of Dunkelflauten / Year - Historical (ERA5)',
                   title=f'{ssp} ({tr})',
-                  vertical_title=f'Difference to ERA5 (1980-2015)' if idx_ssp == 0 else None,
+                  vertical_title=f'Mean (Diff. to ERA5 1980-2015)' if idx_ssp == 0 else None,
                   cmap='cmo.balance',
                   centercolor='white',
                   levels=20,
@@ -572,8 +577,36 @@ for idx_ssp, ssp in enumerate(ssps):
                   y_title=1.2,
                   )
 
+    gplt.plot_map(diff_max,
+                  ax=im_df['ax'][idx_ssp + ncols*1],
+                  plot_borders=True,
+                  #   significance_mask=xr.where(mask, 0, 1),
+                  vmin=vmin,
+                  vmax=-vmin,
+                  label='No. of Dunkelflauten / Year - Historical (ERA5)',
+                  vertical_title=f'Max( Diff. to ERA5 1980-2015)' if idx_ssp == 0 else None,
+                  cmap='cmo.balance',
+                  centercolor='white',
+                  levels=20,
+                  tick_step=4,
+                  )
+
+    gplt.plot_map(diff_min,
+                  ax=im_df['ax'][idx_ssp + ncols*2],
+                  plot_borders=True,
+                  #   significance_mask=xr.where(mask, 0, 1),
+                  vmin=vmin,
+                  vmax=-vmin,
+                  label='No. of Dunkelflauten / Year - Historical (ERA5)',
+                  vertical_title=f'Min( Diff. to ERA5 1980-2015)' if idx_ssp == 0 else None,
+                  cmap='cmo.balance',
+                  centercolor='white',
+                  levels=20,
+                  tick_step=4,
+                  )
+
     gplt.plot_map(std_dfs,
-                  ax=im_df['ax'][idx_ssp + ncols],
+                  ax=im_df['ax'][idx_ssp + ncols*3],
                   plot_borders=True,
                   vmin=0,
                   vmax=15,
