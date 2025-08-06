@@ -44,10 +44,10 @@ fine_res = 0.25
 fine_res = 0.25
 cf_dict_tr = {}
 tr_historical = [
-    ('1980-01-01', '1990-01-01'),
-    ('1990-01-01', '2000-01-01'),
-    ('2000-01-01', '2010-01-01'),
-    ('2010-01-01', '2015-01-01'),
+    # ('1980-01-01', '1990-01-01'),
+    # ('1990-01-01', '2000-01-01'),
+    # ('2000-01-01', '2010-01-01'),
+    # ('2010-01-01', '2015-01-01'),
     ('1980-01-01', '2025-01-01'),]
 
 for (start_date, end_date) in tr_historical:
@@ -151,6 +151,7 @@ for idx, (sname, source) in enumerate(cf_dict.items()):
                       vmin=0,
                       label='Capacity Factor [a.u.]',
                       vmax=.2 if sname == 'solar' else 0.4,
+                      cmap='cmo.thermal',
                       plot_borders=True)
 
 savepath = f"{config['plot_dir']}/capacities_era5/cf_map_{country_name}_{fine_res}.png"

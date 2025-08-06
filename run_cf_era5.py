@@ -36,7 +36,7 @@ N = 3
 
 tr_historical = [
     ('2023-01-01', '2025-01-01'),
-    # ('1980-01-01', '2025-01-01'),
+    ('1980-01-01', '2025-01-01'),
     # ('1980-01-01', '1990-01-01'),
     # ('1990-01-01', '2000-01-01'),
     # ('2000-01-01', '2010-01-01'),
@@ -80,6 +80,7 @@ ds_era5_ds = ds_era5_ds_samples.sel(sample_id=0)
 ds_era5_file_bc = f'{ds_era5_ds_path}/samples_era5_{tr}_{fine_res}_log_{use_log}_bc.nc'
 ds_era5_ds_bc_samples = of.open_nc_file(ds_era5_file_bc)
 ds_era5_ds_bc_samples.load()
+ds_era5_ds_bc_samples = ds_era5_ds_bc_samples.sel(sample_id=0)
 # %%
 reload(cfu)
 time_ranges = tr_historical
@@ -134,6 +135,7 @@ for (start_date, end_date) in time_ranges:
                 config=config,
                 country_name=country_name,
                 correct_qm=True if tr_str != '2023-01-01_2025-01-01' else False,
+                winter_cfs=True
                 )
 
             fut.save_np_dict(cf_dict_cmip, savepath_dict)

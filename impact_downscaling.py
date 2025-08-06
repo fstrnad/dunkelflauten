@@ -78,6 +78,22 @@ cf_dicts = {
     f'DS BC {fine_res}': cf_era5_fine_bc,
     }
 
+def get_cf_mask(cf_dict, threshold=0.1):
+    """
+    Get a mask for the capacity factor data based on a threshold.
+    """
+    cf_onwind_solar = cfu.combined_cf_maps(cf_dict,
+                                           sources=['onwind', 'solar'],)
+    cf_onwind_solar = sput.rename_dims(cf_onwind_solar).mean(dim='time')
+
+    mask = xr.where(cf_onwind_solar < threshold, 0, 1)
+
+    return mask
+
+# %%
+cf_mask = get_cf_mask(cf_dict=cf_era5_fine_gt, threshold=0.1)
+cf_mask_coarse = get_cf_mask(cf_dict=cf_era5_coarse, threshold=0.1)
+
 # %%
 # Local dunkelflauten Germany
 reload(gplt)
@@ -91,25 +107,30 @@ im_cfs = gplt.create_multi_plot(
     hspace=0.4,
     projection='PlateCarree')
 
-threshold = 0.015
-
+threshold = 0.02
 
 for idx, (res, cf_dict_cmip) in enumerate(cf_dicts.items()):
     hourly_res = tu.get_frequency_resolution_hours(
         cf_dict_cmip['solar']['cf_ts'])
     res = res if res != 'daily' else '0.25'
     title = f'{res}°, {hourly_res}h resolution'
-
+    cf_onwind_solar = cfu.combined_cf_maps(cf_dict_cmip,
+                                           sources=['onwind', 'solar'],)
+    cf_onwind_solar = sput.rename_dims(cf_onwind_solar)
+    gs, _ ,_ = sput.get_grid_step(cf_onwind_solar)
+    mask = cf_mask if gs == fine_res else cf_mask_coarse
     for s, sname in enumerate(sources):
         sd, ed = tu.get_time_range(
             cf_dict_cmip[sname]['cf_ts'], asstr=True, m=False, d=False)
 
         cap_fac = cf_dict_cmip[sname]['cf']
+
         gplt.plot_map(cap_fac,
                       ax=im_cfs['ax'][s*ncols + idx],
                       title=title if s == 0 else None,
                       vertical_title=f'{sname} capacity factor \n{sd} - {ed}' if idx == 0 else None,
                       y_title=1.2,
+                      mask=mask,
                       cmap='cmo.thermal',
                       levels=25,
                       tick_step=5,
@@ -118,17 +139,14 @@ for idx, (res, cf_dict_cmip) in enumerate(cf_dicts.items()):
                       vmax=.14 if sname == 'solar' else 0.3,
                       plot_borders=True)
 
-    cf_onwind_solar = cfu.combined_cf_maps(cf_dict_cmip,
-                                           sources=['onwind', 'solar'],)
-    cf_onwind_solar = sput.rename_dims(cf_onwind_solar)
+
     num_hours = 48
 
     window = int(num_hours / hourly_res)  # 8*6 = 48 hours
     cf_ts_mean = tu.rolling_timemean(cf_onwind_solar, window=window)
-    df_local_onwind, mask = tu.compute_evs(cf_ts_mean,
+    df_local_onwind, _ = tu.compute_evs(cf_ts_mean,
                                            threshold=threshold,
                                            threshold_type='lower',
-                                           #    max_rel_share=0.02,
                                            get_mask=True)
 
     num_years = tu.count_unique_years(df_local_onwind)
@@ -136,7 +154,6 @@ for idx, (res, cf_dict_cmip) in enumerate(cf_dicts.items()):
     gplt.plot_map(num_dfs_cell/num_years,
                   ax=im_cfs['ax'][ncols*len(sources) + idx],
                   plot_borders=True,
-                  significance_mask=xr.where(mask, 0, 1),
                   vmin=3,
                   vmax=18,
                   label='No. of Dunkelflauten / Year',
@@ -144,6 +161,7 @@ for idx, (res, cf_dict_cmip) in enumerate(cf_dicts.items()):
                   vertical_title=f'No. of Dunkelflaute events \n{sd} - {ed}' if idx == 0 else None,
                   cmap='cmo.amp',
                   leftcolor='white',
+                  mask=mask,
                   levels=15,
                   tick_step=5
                   )

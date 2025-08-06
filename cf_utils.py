@@ -176,6 +176,8 @@ def compute_cf_dict(cutout_country, config,
                     sources=['offwind', 'onwind', 'solar'],
                     country_name='Germany',
                     correct_qm=True, qm_method='quantile_mapping',
+                    exponent=1,
+                    winter_cfs=True,
                     ):
     cf_dict = dict()
     for source in sources:
@@ -222,7 +224,7 @@ def compute_cf_dict(cutout_country, config,
             cf_average_ts = cutout_country.pv(panel=panel,
                                               orientation=orientation,
                                               capacity_factor=False,
-                                              layout=cf,
+                                              layout=cf**exponent,
                                               per_unit=True,
                                               matrix=ind_matrix,
                                               )
@@ -240,9 +242,10 @@ def compute_cf_dict(cutout_country, config,
             power_generation_source = cutout_country.wind(
                 turbine=turbine, shapes=country_shape,
                 capacity_factor=False)
+
             cf_average_ts = cutout_country.wind(turbine=turbine,
                                                 capacity_factor=False,
-                                                layout=cf,
+                                                layout=cf**exponent,
                                                 per_unit=True,
                                                 matrix=ind_matrix
                                                 )
@@ -256,6 +259,18 @@ def compute_cf_dict(cutout_country, config,
         cf_dict[source]['matrix_xr'] = ind_matrix_xr
         cf_dict[source]['shape'] = country_shape
         cf_dict[source]['weight'] = config['technology'][source]['weight']
+
+        if winter_cfs:
+            gut.myprint(f'Computing winter capacity factors for {source}')
+            cf_winter_ts = tu.get_month_range_data(
+                cf_ts, start_month='Nov', end_month='Jan')
+            cf_dict[source]['cf_winter_ts'] = cf_winter_ts
+
+            cf_winter = tu.compute_timemean(
+                cf_winter_ts,
+                timemean='all' # over all time points
+            )
+            cf_dict[source]['cf_winter'] = cf_winter
 
     if correct_qm:
         gut.myprint(f'Correcting capacity factors with quantile mapping')

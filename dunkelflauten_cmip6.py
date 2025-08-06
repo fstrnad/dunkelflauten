@@ -205,6 +205,22 @@ for gcm in gcms:
             ssp_df_dict_country[ssp] = dfs_per_year_country
     df_dict_country[gcm] = ssp_df_dict_country
 # %%
+
+
+def get_cf_mask(cf_dict, threshold=0.1):
+    """
+    Get a mask for the capacity factor data based on a threshold.
+    """
+    cf_onwind_solar = cfu.combined_cf_maps(cf_dict,
+                                           sources=['onwind', 'solar'],)
+    cf_onwind_solar = sput.rename_dims(cf_onwind_solar).mean(dim='time')
+
+    mask = xr.where(cf_onwind_solar < threshold, 0, 1)
+
+    return mask
+
+
+# %%
 # Risk per year
 reload(tu)
 gcm = 'MPI-ESM1-2-HR'
@@ -503,6 +519,8 @@ im_dfs = gplt.create_multi_plot(
     hspace=0.5
 )
 
+mask = get_cf_mask(cf_dict_era5)
+
 im = gplt.plot_map(av_dfs,
                    ax=im_dfs['ax'][0],
                    plot_borders=True,
@@ -515,6 +533,7 @@ im = gplt.plot_map(av_dfs,
                    leftcolor='white',
                    tick_step=5,
                    levels=25,
+                   mask=mask,
                    )
 im_df_std = gplt.plot_map(av_std_dfs,
                           ax=im_dfs['ax'][1],
@@ -531,7 +550,7 @@ im_df_std = gplt.plot_map(av_std_dfs,
                           )
 
 savepath = f"{config['plot_dir']}/local_risks/CMIP6/ensemble_gcms_{ssp}_{gs_dws}_{threshold}.png"
-gplt.save_fig(savepath, fig=im_df['fig'])
+gplt.save_fig(savepath, fig=im['fig'])
 
 # %%
 dfs_per_year_era5 = local_dfs_per_year(df_dict_local['ERA5'])
@@ -541,8 +560,15 @@ ncols = len(ssps)
 im_df = gplt.create_multi_plot(
     nrows=4, ncols=ncols,
     projection='PlateCarree',
-    hspace=0.5,
+    hspace=0.,
+    figsize=(16, 18),
 )
+
+mask = get_cf_mask(cf_dict_era5)
+lon_range_ger = [5, 16]
+lat_range_ger = [47, 55.5]
+
+label = 'Diff. DF-events/Year (CMIP6-ERA5)'
 
 for idx_ssp, ssp in enumerate(ssps):
     av_dfs, std_dfs = get_gcm_average(ssp=ssp, df_dict_local=df_dict_local)
@@ -567,14 +593,18 @@ for idx_ssp, ssp in enumerate(ssps):
                   #   significance_mask=xr.where(mask, 0, 1),
                   vmin=vmin,
                   vmax=-vmin,
-                  label='No. of Dunkelflauten / Year - Historical (ERA5)',
+                  label=label if idx_ssp == ncols - 1 else None,
+                  orientation='vertical',
                   title=f'{ssp} ({tr})',
-                  vertical_title=f'Mean (Diff. to ERA5 1980-2015)' if idx_ssp == 0 else None,
+                  vertical_title=f'Ensemble Mean' if idx_ssp == 0 else None,
                   cmap='cmo.balance',
                   centercolor='white',
                   levels=20,
                   tick_step=4,
                   y_title=1.2,
+                  mask=mask,
+                  lon_range=lon_range_ger,
+                  lat_range=lat_range_ger,
                   )
 
     gplt.plot_map(diff_max,
@@ -583,12 +613,16 @@ for idx_ssp, ssp in enumerate(ssps):
                   #   significance_mask=xr.where(mask, 0, 1),
                   vmin=vmin,
                   vmax=-vmin,
-                  label='No. of Dunkelflauten / Year - Historical (ERA5)',
-                  vertical_title=f'Max( Diff. to ERA5 1980-2015)' if idx_ssp == 0 else None,
+                  label=label if idx_ssp == ncols - 1 else None,
+                  orientation='vertical',
+                  vertical_title=f'Ensemble Max' if idx_ssp == 0 else None,
                   cmap='cmo.balance',
                   centercolor='white',
                   levels=20,
                   tick_step=4,
+                  mask=mask,
+                  lon_range=lon_range_ger,
+                  lat_range=lat_range_ger,
                   )
 
     gplt.plot_map(diff_min,
@@ -597,26 +631,34 @@ for idx_ssp, ssp in enumerate(ssps):
                   #   significance_mask=xr.where(mask, 0, 1),
                   vmin=vmin,
                   vmax=-vmin,
-                  label='No. of Dunkelflauten / Year - Historical (ERA5)',
-                  vertical_title=f'Min( Diff. to ERA5 1980-2015)' if idx_ssp == 0 else None,
+                  label=label if idx_ssp == ncols - 1 else None,
+                  orientation='vertical',
+                  vertical_title=f'Ensemble Min' if idx_ssp == 0 else None,
                   cmap='cmo.balance',
                   centercolor='white',
                   levels=20,
                   tick_step=4,
+                  mask=mask,
+                  lon_range=lon_range_ger,
+                  lat_range=lat_range_ger,
                   )
 
     gplt.plot_map(std_dfs,
                   ax=im_df['ax'][idx_ssp + ncols*3],
                   plot_borders=True,
                   vmin=0,
-                  vmax=15,
-                  label='Std No. of Dunkelflauten / Year',
+                  vmax=10,
+                  label='Std No. of Dunkelflauten / Year' if idx_ssp == ncols - 1 else None,
+                  orientation='vertical',
                   #   title=f'{tr_str}',
                   vertical_title=f'Ensemble std' if idx_ssp == 0 else None,
                   cmap='cmo.amp',
                   leftcolor='white',
                   tick_step=5,
-                  levels=25,
+                  levels=20,
+                  mask=mask,
+                  lon_range=lon_range_ger,
+                  lat_range=lat_range_ger,
                   )
 savepath = f"{config['plot_dir']}/local_risks/CMIP6/df_local_compare_ensemble_era5_{gs_dws}_{threshold}.png"
 

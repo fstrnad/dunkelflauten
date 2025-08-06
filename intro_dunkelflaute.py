@@ -20,31 +20,43 @@ import cartopy.crs as ccrs
 import atlite as at
 
 from importlib import reload
+import os
 import yaml
-with open('./config.yaml', 'r') as file:
-    config = yaml.safe_load(file)
+# %%
+if os.getenv("HOME") == '/home/ludwig/fstrnad80':
+    cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
+    data_dir = f'{cmip6_dir}/downscaling/'
+    era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
+    with open('./config_cluster.yaml', 'r') as file:
+        config = yaml.safe_load(file)
+    plot_dir = "/mnt/lustre/home/ludwig/fstrnad80/plots/dunkelflauten/methods/"
 
-
-plot_dir = "/home/strnad/plots/dunkelflauten/paper_plots/"
-data_dir = "/home/strnad/data/dunkelflauten/downscaling/eval_with_gt/2023-01-01_2023-01-30_L120_N3/"
-cmip6_dir = "/home/strnad/data/CMIP6/"
-era5_dir = "/home/strnad/data/climate_data/Europe"
+else:
+    plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
+    data_dir = "/home/strnad/data/CMIP6/downscaling/"
+    cmip6_dir = "/home/strnad/data/CMIP6/"
+    era5_dir = "/home/strnad/data/climate_data/Europe"
+    with open('./config.yaml', 'r') as file:
+        config = yaml.safe_load(file)
 # %%
 # Plot a Figure that summarizes the process how to get the dunkelflauten data
 
 # 1. Load the data
-gs = .5
-country_name = "Germany"
-cf_dict_path = f'{config['data_dir']}/{country_name}/era5/cf_dict_{gs}.npy'
+gs = .25
+country_name = 'Germany'
+gs_era5 = 0.25
+tr_str = '1980-01-01_2025-01-01'
+cf_dict_path_era5 = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{gs_era5}_{tr_str}.npy'
 
-cf_dict = fut.load_np_dict(cf_dict_path)
+cf_dict = fut.load_np_dict(cf_dict_path_era5)
+del cf_dict['wind']
 ts_offwind = cf_dict['offwind']['ts']
 ts_onwind = cf_dict['onwind']['ts']
 ts_solar = cf_dict['solar']['ts']
 
 # %%
 country_name = "Germany"
-savepath = f'{config['data_dir']}/{country_name}/{config['data'][gs]}'
+savepath = f'{config['data_dir']}/{country_name}/cutouts/{config['data']['ERA5']}_cutout_{country_name}_{gs}.nc'
 cutout_germany = at.Cutout(savepath)
 # %%
 # cutout_germany.data.load()
@@ -54,7 +66,8 @@ lon_range, lat_range = sput.get_lon_lat_range(cutout_germany.data)
 # Plot the capacify factor time series for whole germany
 df_type = 'all'
 ts_df = cf_dict[df_type]['ts']
-short_time_range = ['2015-01-01', '2016-01-30']
+num_years = tu.count_unique_years(ts_df)
+short_time_range = ['2024-01-01', '2024-12-31']
 
 hourly_res = tu.get_frequency_resolution_hours(ts_df)
 
@@ -109,7 +122,7 @@ plot_grid_dict = dict(
 )
 
 projection = ccrs.PlateCarree()
-fig = plt.figure(figsize=(15, 15))
+fig = plt.figure(figsize=(16, 16))
 gs = GridSpec(5, 4, figure=fig,
               height_ratios=[0.5, 0.5, 0.5, 1, 1],
               width_ratios=[2, .2, 1, .5],
@@ -124,19 +137,25 @@ ax5 = fig.add_subplot(gs[3, 2:])
 ax6 = fig.add_subplot(gs[4:, 0])
 ax7 = fig.add_subplot(gs[4:, 2:])
 
-gplt.enumerate_subplots(axs=[ax0, ax1, ax4, ax5, ax6, ax7],)
+gplt.enumerate_subplots(axs=[ax0, ax1, ax4, ax5, ax6, ax7],
+                        pos_y=1.15)
 cap_fac = sput.rename_dims(cf_dict['all']['cf'])
 ind_matrix = xr.where(
     (cf_dict['solar']['matrix_xr'] + cf_dict['offwind']['matrix_xr']) == 0, np.nan, 1)
 im = gplt.plot_map(cap_fac,  # *ind_matrix,
                    ax=ax1,
-                   title='Capacity Factors Germany (1979-2024)',
+                   title='Mean Capacity Factors (CFs) (1979-2024)',
                    vmin=0,  vmax=.3,
-                   #   projection=projection,
-                   label='Capacity Factor',
-                   lon_range=[4, 16],
-                   lat_range=[46, 56],
+                   levels=50,
+                   tick_step=10,
+                   y_title=1.1,
+                   cmap='cmo.thermal',
+                   label='Capacity Factor (CF) [a.u.]',
+                   lon_range=[5, 16],
+                   lat_range=[47, 55.5],
                    orientation='vertical',
+                   alpha=0.8,
+                   lw_borders=1,
                    plot_borders=True)
 cells.plot(
     **plot_grid_dict,
@@ -154,7 +173,7 @@ gplt.plot_2d(
     xticklabels=[],
     ax=ax0)
 
-influx_data = tu.get_time_range_data(cutout_germany.data.influx_direct.mean([
+influx_data = tu.get_time_range_data(cutout_germany.data.influx.mean([
                                      "x", "y"]), time_range=short_time_range)
 gplt.plot_2d(
     x=influx_data.time,
@@ -182,13 +201,14 @@ im_ax1 = gplt.plot_2d(x=[ts_df_mean.time.data, tps_dfl.time.data],
                       label_arr=['CF',
                                  'event'],
                       ls_arr=['-', ''],
-                      mk_arr=['', 'x'],
+                      mk_arr=['', r'$\bigstar$'],
                       lw=1.5,
                       color_arr=['tab:blue', 'tab:red'],
                       #  xlabel='Time',
-                      ylabel="Capacity Factor [a.u.]",
-                      ylim=(0, 0.6),
+                      ylabel="CF [a.u.]",
+                      ylim=(0, 0.46),
                       rot=20,
+                      y_title=1.1,
                       )
 gplt.plot_hline(ax=im_ax1['ax'], y=threshold, color='r', ls='--',
                 label=f'Threshold',
@@ -201,153 +221,59 @@ years = tu.get_year(dfl_per_year.time)
 gplt.plot_2d(x=years,
              y=dfl_per_year.data,
              ax=ax5,
-            #  plot_type='bar',
-             title=f'Dunkelflaute per year',
+             #  plot_type='bar',
+             title=f'Dunkelflaute events per year',
+             y_title=1.1,
              ls_arr=['-'],
              lw=2,
              color='tab:red',
              mk_arr=[''],
              #  xlabel='Year',
              ylabel='No. of events',
-             rot=90,
+             rot=45,
              ylim=(0, 9),
              set_yint=True,
-            #  xticks
-            #  xticklabels=years[::2],
+             set_grid=True,
+             #  xticks
+             #  xticklabels=years[::2],
              )
 
-
+day_index = data_arr[0].time.data[np.linspace(0, len(data_arr[0].time.data) - 31, 12, dtype=int)]
 im = gplt.plot_2d(x=data_arr[0].time,
                   y=data_arr,
+                  xticks=day_index,
+                  xticklabels=tu.months,
+                  rot=45,
                   ax=ax6,
-                  title=f"Contributions to capacity factor (1979-2024)",
-                  label_arr=list(cf_dict.keys()) + ['All'],
-                  color_arr=['blue', 'tab:blue', 'c', 'orange', 'black'],
-                  xlabel="Day of Year",
-                  ylabel="Capacity Factor [a.u.]",
+                  title=f"Contributions to CF (1979-2024)",
+                  y_title=1.1,
+                  label_arr=list(cf_dict.keys()),
+                  color_arr=['blue', 'tab:blue', 'orange', 'black'],
+                  xlabel="Month of Year",
+                  ylabel="CF [a.u.]",
                   set_grid=True,
-                  ylim=(0, .7),
+                  ylim=(0, .67),
                   loc='outside',
                   )
 
 
 gplt.plot_2d(x=dfl_per_month.time.data,
-             y=dfl_per_month.data,
+             y=dfl_per_month.data/num_years,
              ax=ax7,
              plot_type='bar',
-             title=f'Dunkelflaute per month',
-             label_arr=['Dunkelflaute per month'],
+             title=f'Freq. Dunkelflaute/month',
+             y_title=1.1,
+             label_arr=['Dunkelflaute/month'],
              ls_arr=['-'],
              mk_arr=[''],
              #  xlabel='Year',
              ylabel='No. of events',
-             rot=90,
-             ylim=(0, 26),
+             rot=45,
+             ylim=(0, 1.05),
              )
 
 savepath = f'{plot_dir}/dunkelflauten_overview.png'
 gplt.save_fig(savepath=savepath)
-# %%
-# Risk Assessment
-
-reload(gplt)
-# %%
-# Local dunkelflauten Germany
-reload(gplt)
-
-w_on_solar = cf_dict['onwind']['weight'] + cf_dict['solar']['weight']
-cf_onwind_solar = (cf_dict['onwind']['weight'] * cf_dict['onwind']['cf_ts'] + \
-    cf_dict['solar']['weight'] * cf_dict['solar']['cf_ts']) * 1/w_on_solar
-# %%
-reload(tu)
-cf_onwind_solar = sput.rename_dims(cf_onwind_solar)
-num_hours = 48
-window = int(num_hours / hourly_res)  # 8*6 = 48 hours
-cf_ts_mean = tu.rolling_timemean(cf_onwind_solar, window=window)
-threshold = 0.02
-df_local_onwind = tu.compute_evs(cf_ts_mean,
-                                 threshold=threshold,
-                                 threshold_type='lower',
-                                 max_rel_share=0.01,
-                                 get_mask=False)
-# %%
-# ERA5
-reload(tu)
-reload(gplt)
-time_ranges = tu.split_time_by_year_span(df_local_onwind, span_years=10)
-im = gplt.create_multi_plot(nrows=1, ncols=len(time_ranges),
-                            figsize=(22, 10),
-                            hspace=0.4,
-                            wspace=0.3,
-                            projection='PlateCarree',
-                            )
-for idx, tr in enumerate(time_ranges):
-    tr_df = tu.get_time_range_data(df_local_onwind,
-                                   time_range=tr)
-    num_years = tu.count_unique_years(tr_df)
-    num_dfs_cell = tr_df.sum(dim='time')
-    gplt.plot_map(num_dfs_cell/num_years,
-                  ax=im['ax'][idx],
-                  plot_borders=True,
-                  vmin=0,
-                  vmax=20,
-                  label='No. of Dunkelflauten / Year',
-                  title=f'{tr[0]} - {tr[1]}',
-                  vertical_title='ERA5' if idx == 0 else None,
-                  cmap='Reds',
-                  leftcolor='white',
-                  levels=10,
-                  )
-
-savepath = f'{plot_dir}/dunkelflauten_local_{country_name}_era5.png'
-gplt.save_fig(savepath, fig=im['fig'])
 
 # %%
-data_arr = []
-subdevide = 1
-window = int(365/subdevide)
-yearly_ts_all = 0
-trend_arr = []
-x_lin_reg = np.linspace(0, 1, 100)
-
-time_range = None
-for cap_name, cap in cf_dict.items():
-    if cap_name == 'wind':
-        continue
-    da = cap['ts']
-    if window > 1:
-        da = tu.rolling_timemean(da, window=window, center=False,
-                                 )
-    if time_range is not None:
-        da = tu.get_time_range_data(da, time_range)
-    time = da.time
-    data_arr.append(da)
-    # compute the trend
-    num_tps = (time.values - time.values[0]
-               ).astype('timedelta64[h]').astype(int)
-    coeffs = np.polyfit(num_tps, da.values, deg=1)
-    trend = np.polyval(coeffs, num_tps)
-    trend = xr.DataArray(trend, coords={'time': da.time}, dims='time')
-    trend_arr.append(trend)
-
-sd, ed = tu.get_time_range(data, asstr=True)
-im = gplt.plot_2d(x=data_arr[0].time,
-                  y=data_arr,
-                  #  power_pv.values,
-                  title=f"Mean Cap. Factor {sd} - {ed}",
-                  vertical_title=f'ERA5',
-                  label_arr=list(cf_dict.keys()),
-                  color_arr=['blue', 'tab:blue', 'orange', 'black'],
-                #   xlabel="Day of Year",
-                ylabel="Capacity Factor [a.u.]",
-                  set_grid=True,
-                  #   ylim=(0.1, .5),
-                  )
-im = gplt.plot_2d(x=trend_arr[0].time,
-                  y=trend_arr,
-                  ax=im['ax'],
-                  color_arr=['blue', 'tab:blue', 'orange', 'black'],
-                  )
-
-savepath = f'{plot_dir}/{country_name}_era5_capacity_factor_time_period.png'
-gplt.save_fig(savepath, fig=im['fig'])
+print(data_arr[0].time.data[np.linspace(0, len(data_arr[0].time.data) -1, 12, dtype=int)])
