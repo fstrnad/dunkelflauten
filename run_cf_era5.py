@@ -41,7 +41,7 @@ tr_historical = [
     # ('1990-01-01', '2000-01-01'),
     # ('2000-01-01', '2010-01-01'),
     # ('2010-01-01', '2015-01-01'),
-    ]
+]
 
 variables = [
     '10m_u_component_of_wind',
@@ -64,6 +64,9 @@ for variable in variables:
 
 ds_era5_fine = of.open_nc_file(files_gt).load()
 ds_era5_coarse = of.open_nc_file(files_coarse).load()
+# %%
+# daily averages
+reload(tu)
 ds_era5_daily = tu.compute_timemean(ds=ds_era5_fine, timemean='day')
 # %%
 tr = '2023-01-01_2025-01-01'
@@ -81,6 +84,23 @@ ds_era5_file_bc = f'{ds_era5_ds_path}/samples_era5_{tr}_{fine_res}_log_{use_log}
 ds_era5_ds_bc_samples = of.open_nc_file(ds_era5_file_bc)
 ds_era5_ds_bc_samples.load()
 ds_era5_ds_bc_samples = ds_era5_ds_bc_samples.sel(sample_id=0)
+
+# %%
+# lsm file
+reload(of)
+lsm_file_country = f'{era5_dir}/{country_name}_nn/{fine_res}/lsm.nc'
+lsm_fine = of.open_nc_file(lsm_file_country)
+lsm_file_coarse = f'{era5_dir}/{country_name}_av/{coarse_res}/lsm.nc'
+lsm_coarse = of.open_nc_file(lsm_file_coarse)
+
+lsm_fine = lsm_fine.load()
+lsm_fine = gut.rename_dim(lsm_fine, dim='lon', name='x')
+lsm_fine = gut.rename_dim(lsm_fine, dim='lat', name='y')
+
+lsm_coarse = lsm_coarse.load()
+lsm_coarse = gut.rename_dim(lsm_coarse, dim='lon', name='x')
+lsm_coarse = gut.rename_dim(lsm_coarse, dim='lat', name='y')
+
 # %%
 reload(cfu)
 time_ranges = tr_historical
@@ -120,6 +140,12 @@ for (start_date, end_date) in time_ranges:
             else:
                 ds_era5_tr = tu.get_time_range_data(
                     ds_era5_daily, time_range=(start_date, end_date))
+
+            if savepath_dict == savepath_dict_coarse:
+                lsm = lsm_coarse
+            else:
+                lsm = lsm_fine
+
             savepath_cutout = f'{config['data_dir']}/{country_name}/{config['data']['ERA5']}_cutout_tmp.nc'
 
             ds_cutout = cfu.compute_cutouts(ds=ds_era5_tr)
@@ -129,15 +155,16 @@ for (start_date, end_date) in time_ranges:
                 data=ds_cutout)
             cutout_germany.data.load()
 
-            cf_dict_cmip = cfu.compute_cf_dict(
+            cf_dict_era5 = cfu.compute_cf_dict(
                 # sources=sources,
                 cutout_country=cutout_germany,
                 config=config,
                 country_name=country_name,
                 correct_qm=True if tr_str != '2023-01-01_2025-01-01' else False,
-                winter_cfs=True
-                )
+                winter_cfs=True,
+                lsm=lsm
+            )
 
-            fut.save_np_dict(cf_dict_cmip, savepath_dict)
-            # break
+            fut.save_np_dict(cf_dict_era5, savepath_dict)
+
 # %%

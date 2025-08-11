@@ -22,6 +22,9 @@ import atlite as at
 from importlib import reload
 import os
 import yaml
+import xarray as xr
+import numpy as np
+import pandas as pd
 # %%
 if os.getenv("HOME") == '/home/ludwig/fstrnad80':
     cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
@@ -64,6 +67,7 @@ lon_range, lat_range = sput.get_lon_lat_range(cutout_germany.data)
 
 # %%
 # Plot the capacify factor time series for whole germany
+reload(tu)
 df_type = 'all'
 ts_df = cf_dict[df_type]['ts']
 num_years = tu.count_unique_years(ts_df)
@@ -80,11 +84,8 @@ ts_evs = tu.compute_evs(ts_df_mean,
                         threshold=threshold,
                         threshold_type='lower',
                         get_mask=False)
-tps_dfl_raw = ts_df_mean.where(ts_evs == 1).dropna('time')
-min_consecutive = 1
-tps_dfl = tu.find_consecutive_ones(ts_evs,
-                                   min_consecutive=min_consecutive)
-tps_dfl = tu.get_sel_tps_ds(ts_df_mean, tps_dfl)
+
+tps_dfl, len_dfl, n_dfl, avg_len_dfl = tu.analyze_binary_event_series(ts_evs)
 dfl_per_year = tu.count_time_points(tps_dfl)
 
 dfl_per_month = tu.count_time_points(tps_dfl, counter='month')
@@ -92,10 +93,10 @@ dfl_per_month = tu.count_time_points(tps_dfl, counter='month')
 dfl_per_week = tu.count_time_points(tps_dfl, counter='week')
 
 
-ts_df_mean = tu.get_time_range_data(ts_df_mean,
-                                    time_range=short_time_range)
-tps_dfl = tu.get_time_range_data(tps_dfl,
-                                 time_range=short_time_range)
+ts_df_mean_short = tu.get_time_range_data(ts_df_mean,
+                                          time_range=short_time_range)
+tps_dfl_short = tu.get_time_range_data(tps_dfl,
+                                       time_range=short_time_range)
 
 data_arr = []
 timemean = 'dayofyear'
@@ -125,8 +126,8 @@ projection = ccrs.PlateCarree()
 fig = plt.figure(figsize=(16, 16))
 gs = GridSpec(5, 4, figure=fig,
               height_ratios=[0.5, 0.5, 0.5, 1, 1],
-              width_ratios=[2, .2, 1, .5],
-              wspace=0.4,
+              width_ratios=[2, .1, 1, .5],
+              wspace=0.5,
               hspace=1.1, )
 ax0 = fig.add_subplot(gs[0, 0])
 ax1 = fig.add_subplot(gs[:3, 1:], projection=projection)
@@ -139,6 +140,7 @@ ax7 = fig.add_subplot(gs[4:, 2:])
 
 gplt.enumerate_subplots(axs=[ax0, ax1, ax4, ax5, ax6, ax7],
                         pos_y=1.15)
+
 cap_fac = sput.rename_dims(cf_dict['all']['cf'])
 ind_matrix = xr.where(
     (cf_dict['solar']['matrix_xr'] + cf_dict['offwind']['matrix_xr']) == 0, np.nan, 1)
@@ -193,12 +195,13 @@ gplt.plot_2d(
     rot=20,
     ax=ax3)
 
-
-im_ax1 = gplt.plot_2d(x=[ts_df_mean.time.data, tps_dfl.time.data],
-                      y=[ts_df_mean, tps_dfl],
+tps_dfl_shor_values = ts_df_mean_short.sel(
+    time=tps_dfl_short.time.data)
+im_ax1 = gplt.plot_2d(x=[ts_df_mean_short.time.data, tps_dfl_short.time.data],
+                      y=[ts_df_mean_short, tps_dfl_shor_values],
                       ax=ax4,
                       title=f'Detect Dunkelflaute events',
-                      label_arr=['CF',
+                      label_arr=['48h-mean CF',
                                  'event'],
                       ls_arr=['-', ''],
                       mk_arr=['', r'$\bigstar$'],
@@ -211,7 +214,7 @@ im_ax1 = gplt.plot_2d(x=[ts_df_mean.time.data, tps_dfl.time.data],
                       y_title=1.1,
                       )
 gplt.plot_hline(ax=im_ax1['ax'], y=threshold, color='r', ls='--',
-                label=f'Threshold',
+                label=f'threshold',
                 loc='outside',
                 lw=1)
 
@@ -238,7 +241,8 @@ gplt.plot_2d(x=years,
              #  xticklabels=years[::2],
              )
 
-day_index = data_arr[0].time.data[np.linspace(0, len(data_arr[0].time.data) - 31, 12, dtype=int)]
+day_index = data_arr[0].time.data[np.linspace(
+    0, len(data_arr[0].time.data) - 31, 12, dtype=int)]
 im = gplt.plot_2d(x=data_arr[0].time,
                   y=data_arr,
                   xticks=day_index,
@@ -276,4 +280,40 @@ savepath = f'{plot_dir}/dunkelflauten_overview.png'
 gplt.save_fig(savepath=savepath)
 
 # %%
-print(data_arr[0].time.data[np.linspace(0, len(data_arr[0].time.data) -1, 12, dtype=int)])
+reload(tu)
+length = 20
+fraction_ones = 0.2
+num_ones = int(length * fraction_ones)
+arr = np.zeros(length, dtype=int)
+arr[:num_ones] = 1
+np.random.shuffle(arr)
+time = pd.date_range("2000-01-01", periods=length, freq="H")
+xr_ts = xr.DataArray(arr, coords={"time": time}, dims="time")
+print(xr_ts)
+
+tu.analyze_binary_event_series(xr_ts)
+
+# %%
+reload(gplt)
+reload(tu)
+dfl_per_year = tu.count_tps(len_dfl, counter='year')
+len_per_year = tu.compute_timemean(len_dfl, timemean='year')
+
+gplt.plot_2d(y=dfl_per_year.data,
+             x=len_per_year.data*hourly_res + 42,
+             ls='',
+             mk='o',
+             ylabel='Dunkelflaute events per year',
+             xlabel='Av Length of Dunkelflaute events/year [h]',)
+
+# %%
+reload(gplt)
+gplt.plot_hist(
+    data=(len_dfl.data*hourly_res + 42)/24,
+    xlabel='Length of Dunkelflaute events [days]',
+    ylabel='Frequency',
+    density=True,
+    xlim=(1.9,8),
+    # mk='o',
+    # nbins=11,
+)

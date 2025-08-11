@@ -125,30 +125,28 @@ def local_dfs_per_year(df_local_onwind):
 
 
 def country_df_ts(cf_dict, df_type='all',
-                  min_consecutive=1,
                   num_hours=48, hourly_res=6, threshold=0.06):
     ts_df = cf_dict[df_type]['ts']
     hourly_res = tu.get_frequency_resolution_hours(ts_df)
     window = int(num_hours / hourly_res)  # 8*6 = 48 hours
-    ts_df_mean = tu.rolling_timemean(ts_df, window=window)
+    ts_df_mean = tu.rolling_timemean(ts_df, window=window,
+                                     fill_lims=True)
 
     ts_evs = tu.compute_evs(ts_df_mean,
                             threshold=threshold,
                             threshold_type='lower',
                             get_mask=False)
+    tps_dfl, len_dfl, n_dfl, avg_len_dfl = tu.analyze_binary_event_series(
+        ts_evs)
 
-    tps_dfl = tu.find_consecutive_ones(ts_evs,
-                                       min_consecutive=min_consecutive)
-    tps_dfl = tu.get_sel_tps_ds(ts_df_mean, tps_dfl)
-    dfl_per_year = tu.count_time_points(tps_dfl,
-                                        counter='year')
+    dfl_per_year = tu.count_tps(len_dfl, counter='year')
 
-    return dfl_per_year
+    return dfl_per_year, len_dfl
 
 
 # %%
 df_dict_local = {}
-df_dict_country = {}
+
 num_hours = 48
 hourly_res = 6
 threshold = 0.02
@@ -178,15 +176,21 @@ for gcm in gcms:
     df_dict_local[gcm] = ssp_df_dict_local
 # %%
 threshold_country = 0.06
-df_dict_country['ERA5'] = country_df_ts(
+num_hours = 48
+hourly_res = 6
+
+df_dict_country = {}
+len_df_country = {}
+df_dict_country['ERA5'], len_df_country['ERA5'] = country_df_ts(
     cf_dict_era5,
     num_hours=num_hours,
     hourly_res=hourly_res,
-    threshold=threshold_country
+    threshold=threshold_country-0.005
 )
 
 for gcm in gcms:
     ssp_df_dict_country = {}
+    ssp_len_df_country = {}
     for ssp in ssps:
         df_tr_dict_country = {}
         time_ranges = tr_ssp if ssp != 'historical' else tr_historical
@@ -196,14 +200,16 @@ for gcm in gcms:
         tr_str = f'{start_date}_{end_date}'
         cf_dict_tr = gcm_ssp_cf_dict[gcm][ssp]
         if cf_dict_tr:
-            dfs_per_year_country = country_df_ts(
+            dfs_per_year_country, len_dfs = country_df_ts(
                 cf_dict_tr,
                 num_hours=num_hours,
                 hourly_res=hourly_res,
                 threshold=threshold_country
             )
             ssp_df_dict_country[ssp] = dfs_per_year_country
+            ssp_len_df_country[ssp] = len_dfs
     df_dict_country[gcm] = ssp_df_dict_country
+    len_df_country[gcm] = ssp_len_df_country
 # %%
 
 
@@ -353,24 +359,34 @@ for idx, ssp in enumerate(['ssp245', 'ssp585']):
                      #  ylim=(0, 9),
                      )
 savepath = f'{config['plot_dir']}/dunkelflauten_cmip6/ts_df_year_reg.png'
-gplt.save_fig(savepath)
+# gplt.save_fig(savepath)
 
 # %%
 # Compare historical ssps vs ERA5
 ssp = 'historical'
-im = gplt.create_multi_plot(nrows=3, ncols=1,
-                            figsize=(10, 13),
+ncols = 3
+nrows = 2
+im = gplt.create_multi_plot(nrows=nrows, ncols=ncols,
+                            figsize=(15, 10),
                             hspace=0.6)
 for idx, ssp in enumerate(ssps):
     for idx_gcm, gcm in enumerate(['ERA5'] + gcms):
         if gcm != 'ERA5':
             dfl_per_year = df_dict_country[gcm][ssp]
+            len_dfl = len_df_country[gcm][ssp]
         else:
+
             if ssp != 'historical':
                 continue
             dfl_per_year_era5, _ = tu.equalize_time_points(
                 df_dict_country[gcm],
                 df_dict_country['MPI-ESM1-2-HR'][ssp]
+            )
+            
+            len_dfl = len_df_country[gcm]
+            len_dfl = tu.get_time_range_data(
+                len_dfl,
+                time_range=('1980-01-01', '2015-01-01'),
             )
             tr = tu.get_time_range(dfl_per_year_era5, asstr=True)
             dfl_per_year = dfl_per_year_era5
@@ -378,28 +394,55 @@ for idx, ssp in enumerate(ssps):
         fit_vals, slope, p = sut.linear_regression_xarray(dfl_per_year)
         slope *= 365
         ls = '--' if gcm == 'ERA5' else '-'
-        lw = 3 if gcm == 'ERA5' else 2
+        lw = 4 if gcm == 'ERA5' else 1
+
+        dfl_per_year = tu.rolling_timemean(dfl_per_year, window=20, fill_lims=True)
+        avg_len = len_dfl.mean()
+
+        label = f'{gcm}' if idx == 0 else None
+
         gplt.plot_2d(x=tu.get_year(dfl_per_year.time),
-                     y=[dfl_per_year.data, fit_vals],
+                     y=[dfl_per_year.data,
+                        # fit_vals
+                        ],
                      ax=im['ax'][idx],
                      #  plot_type='bar',
                      title=ssp,
-                     label=[None,
-                            f'{gcm} (r={slope:.3f}, p={p:.3f})'],
+                    #  label=label,
                      ls_arr=[ls, ls],
                      color=gplt.colors[idx_gcm],
-                     mk_arr=['x', ''],
-                     lw_arr=[0.5, lw],
-                     alpha_arr=[0.5, 1],
+                     mk_arr=['', ''],
+                     lw_arr=[lw],
+                     alpha_arr=[1, 1],
                      ncol_legend=1,
                      loc='outside',
                      #  xlabel='Year',
-                     ylabel='No. of Dunkelflaute events',
+                     ylabel='No. of Dunkelflaute events' if idx == 0 else None,
                      rot=45,
-                     #  ylim=(0, 9),
+                      ylim=(0, 5),
                      #  box_loc=(-0.05, -0.2)
                      )
-savepath = f'{config['plot_dir']}/dunkelflauten_cmip6/ts_df_year_reg_all_ssps.png'
+
+        gplt.plot_hist(
+            ax=im['ax'][idx + ncols],
+            data=(len_dfl.data*hourly_res + 42)/24,
+            xlabel='Length of Dunkelflaute events [days]',
+            ylabel='No. of events' if idx == 0 else None,
+            density=False,
+            xlim=(1.9, 8),
+            # ylim=
+            lw=lw,
+            ls=ls,
+            label=label,
+            color=gplt.colors[idx_gcm],
+            # mk='o',
+            nbins=8,
+            loc='under',
+            box_loc=(-0.05, -0.25),
+            ncol_legend=3
+        )
+
+savepath = f'{config['plot_dir']}/dunkelflauten_cmip6/ts_df_year_all_ssps.png'
 gplt.save_fig(savepath)
 
 # %%

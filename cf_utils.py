@@ -178,6 +178,8 @@ def compute_cf_dict(cutout_country, config,
                     correct_qm=True, qm_method='quantile_mapping',
                     exponent=1,
                     winter_cfs=True,
+                    lsm=None,
+                    lsm_threshold=0.5
                     ):
     cf_dict = dict()
     for source in sources:
@@ -249,6 +251,7 @@ def compute_cf_dict(cutout_country, config,
                                                 per_unit=True,
                                                 matrix=ind_matrix
                                                 )
+
         power_source = sput.remove_single_dim(power_generation_source,)
         cf_average_ts = sput.remove_single_dim(ds=cf_average_ts)
         cf_dict[source]['cf'] = cf
@@ -260,6 +263,24 @@ def compute_cf_dict(cutout_country, config,
         cf_dict[source]['shape'] = country_shape
         cf_dict[source]['weight'] = config['technology'][source]['weight']
 
+        if lsm is not None:
+            if isinstance(lsm, xr.Dataset):
+                lsm = lsm.lsm
+            gut.myprint(f'Applying land-sea mask for {source}')
+            if source == 'onwind' or source == 'solar':
+                cf_dict[source]['cf'] = xr.where(
+                    lsm > lsm_threshold, cf_dict[source]['cf'], np.nan)
+                cf_dict[source]['cf_ts'] = xr.where(
+                    lsm > lsm_threshold, cf_dict[source]['cf_ts'], np.nan)
+            elif source == 'offwind':
+                cf_dict[source]['cf'] = xr.where(
+                    lsm < lsm_threshold, cf_dict[source]['cf'], np.nan)
+                cf_dict[source]['cf_ts'] = xr.where(
+                    lsm < lsm_threshold, cf_dict[source]['cf_ts'], np.nan)
+            else:
+                raise ValueError(
+                    f'Unknown source {source} for land-sea mask!')
+
         if winter_cfs:
             gut.myprint(f'Computing winter capacity factors for {source}')
             cf_winter_ts = tu.get_month_range_data(
@@ -268,7 +289,7 @@ def compute_cf_dict(cutout_country, config,
 
             cf_winter = tu.compute_timemean(
                 cf_winter_ts,
-                timemean='all' # over all time points
+                timemean='all'  # over all time points
             )
             cf_dict[source]['cf_winter'] = cf_winter
 
@@ -279,6 +300,7 @@ def compute_cf_dict(cutout_country, config,
         cf_dict = correct_cf_dict_opsd(cf_dict, opsd_dict, method=qm_method)
 
     weight_arr = []
+    weight_arr_locs = []
     ts_all = 0
     cap_all = 0
     for source in cf_dict.keys():
@@ -294,21 +316,17 @@ def compute_cf_dict(cutout_country, config,
     cap_all = cap_all / sum_weights
     cf_dict['all'] = {'ts': ts_all}
     cf_dict['all']['cf'] = cap_all
+    cf_dict['all']['cf_ts'] = combined_cf_maps(cf_dict,
+                                               sources=['onwind', 'solar'])
     cf_dict['all']['weights'] = weight_arr
 
-    if 'offwind' in cf_dict.keys() and 'onwind' in cf_dict.keys():
-        # Combine onshore and offshore wind
-        gut.myprint('Combining onshore and offshore wind')
-        ts_offwind = cf_dict['offwind']['ts']
-        ts_onwind = cf_dict['onwind']['ts']
-        ts_wind = config['technology']['offwind']['weight'] * ts_offwind + \
-            config['technology']['onwind']['weight'] * ts_onwind
+    if lsm is not None:
+        gut.myprint(f'Applying land-sea mask for all sources')
+        cap_fac_off = cf_dict['offwind']['cf'].copy()
+        cf_dict['all']['cf'] = xr.where(lsm > lsm_threshold, cf_dict['all']['cf'], cap_fac_off)
 
-        cf_dict['wind'] = {'ts': ts_wind,
-                           'weights':
-                           [config['technology']['offwind']['weight'],
-                            config['technology']['onwind']['weight']],
-                           }
+        cap_fac_off_ts = cf_dict['offwind']['cf_ts'].copy()
+        cf_dict['all']['cf_ts'] = xr.where(lsm > lsm_threshold, cf_dict['all']['cf_ts'], cap_fac_off_ts)
 
     return cf_dict
 

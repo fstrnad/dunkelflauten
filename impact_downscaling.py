@@ -27,7 +27,7 @@ import yaml
 if os.getenv("HOME") == '/home/ludwig/fstrnad80':
     cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
     data_dir = f'{cmip6_dir}/downscaling/'
-    era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/climate_data/Europe"
+    era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
     with open('./config_cluster.yaml', 'r') as file:
         config = yaml.safe_load(file)
 else:
@@ -57,6 +57,14 @@ tr_idx = 0
 start_date, end_date = time_ranges[tr_idx]
 tr_str = f'{start_date}_{end_date}'
 
+# %%
+# lsm file
+reload(of)
+lsm_file_country = f'{era5_dir}/{country_name}_nn/{fine_res}/lsm.nc'
+lsm_fine = of.open_nc_file(lsm_file_country)
+lsm_file_coarse = f'{era5_dir}/{country_name}_av/{coarse_res}/lsm.nc'
+lsm_coarse = of.open_nc_file(lsm_file_coarse)
+
 
 # %%
 savepath_dict_fine_gt = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{fine_res}_{tr_str}.npy'
@@ -76,7 +84,8 @@ cf_dicts = {
     'daily': cf_era5_daily,
     f'DS {fine_res}': cf_era5_fine,
     f'DS BC {fine_res}': cf_era5_fine_bc,
-    }
+}
+
 
 def get_cf_mask(cf_dict, threshold=0.1):
     """
@@ -90,6 +99,7 @@ def get_cf_mask(cf_dict, threshold=0.1):
 
     return mask
 
+
 # %%
 cf_mask = get_cf_mask(cf_dict=cf_era5_fine_gt, threshold=0.1)
 cf_mask_coarse = get_cf_mask(cf_dict=cf_era5_coarse, threshold=0.1)
@@ -99,31 +109,35 @@ cf_mask_coarse = get_cf_mask(cf_dict=cf_era5_coarse, threshold=0.1)
 reload(gplt)
 reload(cfu)
 reload(tu)
-sources = ['offwind', 'solar', ]
+sources = ['onwind', 'solar', ]
 ncols = len(cf_dicts)
 nrows = len(sources) + 1
 im_cfs = gplt.create_multi_plot(
     nrows=nrows, ncols=ncols,
-    hspace=0.4,
+    hspace=0.1,
     projection='PlateCarree')
 
 threshold = 0.02
 
-for idx, (res, cf_dict_cmip) in enumerate(cf_dicts.items()):
+lon_range_ger = [5, 16]
+lat_range_ger = [47, 55.5]
+
+for idx, (res, cf_dict_era5) in enumerate(cf_dicts.items()):
     hourly_res = tu.get_frequency_resolution_hours(
-        cf_dict_cmip['solar']['cf_ts'])
+        cf_dict_era5['solar']['cf_ts'])
     res = res if res != 'daily' else '0.25'
     title = f'{res}°, {hourly_res}h resolution'
-    cf_onwind_solar = cfu.combined_cf_maps(cf_dict_cmip,
-                                           sources=['onwind', 'solar'],)
+    cf_onwind_solar = cf_dict_era5['all']['cf_ts']
     cf_onwind_solar = sput.rename_dims(cf_onwind_solar)
-    gs, _ ,_ = sput.get_grid_step(cf_onwind_solar)
+    gs, _, _ = sput.get_grid_step(cf_onwind_solar)
     mask = cf_mask if gs == fine_res else cf_mask_coarse
     for s, sname in enumerate(sources):
         sd, ed = tu.get_time_range(
-            cf_dict_cmip[sname]['cf_ts'], asstr=True, m=False, d=False)
+            cf_dict_era5[sname]['cf_ts'], asstr=True, m=False, d=False)
 
-        cap_fac = cf_dict_cmip[sname]['cf']
+        lsm = lsm_fine if gs == fine_res else lsm_coarse
+        cap_fac = cf_dict_era5[sname]['cf']
+        cap_fac = sput.check_dimensions(cap_fac)
 
         gplt.plot_map(cap_fac,
                       ax=im_cfs['ax'][s*ncols + idx],
@@ -135,19 +149,20 @@ for idx, (res, cf_dict_cmip) in enumerate(cf_dicts.items()):
                       levels=25,
                       tick_step=5,
                       label='Capacity Factor [a.u.]',
-                      vmin=0.08 if  sname == 'solar' else 0.0,
-                      vmax=.14 if sname == 'solar' else 0.3,
+                      vmin=0.08 if sname == 'solar' else 0.0,
+                      vmax=.14 if sname == 'solar' else 0.4,
+                      lon_range=lon_range_ger,
+                      lat_range=lat_range_ger,
                       plot_borders=True)
-
 
     num_hours = 48
 
     window = int(num_hours / hourly_res)  # 8*6 = 48 hours
     cf_ts_mean = tu.rolling_timemean(cf_onwind_solar, window=window)
     df_local_onwind, _ = tu.compute_evs(cf_ts_mean,
-                                           threshold=threshold,
-                                           threshold_type='lower',
-                                           get_mask=True)
+                                        threshold=threshold,
+                                        threshold_type='lower',
+                                        get_mask=True)
 
     num_years = tu.count_unique_years(df_local_onwind)
     num_dfs_cell = df_local_onwind.sum(dim='time')
@@ -157,16 +172,38 @@ for idx, (res, cf_dict_cmip) in enumerate(cf_dicts.items()):
                   vmin=3,
                   vmax=18,
                   label='No. of Dunkelflauten / Year',
-                #   title=title,
+                  #   title=title,
                   vertical_title=f'No. of Dunkelflaute events \n{sd} - {ed}' if idx == 0 else None,
                   cmap='cmo.amp',
                   leftcolor='white',
                   mask=mask,
                   levels=15,
-                  tick_step=5
+                  tick_step=5,
+                  lon_range=lon_range_ger,
+                  lat_range=lat_range_ger,
                   )
+    break
 
 savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res_ERA5_{tr_str}.png"
 
 gplt.save_fig(savepath_cfs, fig=im_cfs['fig'])
 # %%
+cf_era5_fine_bc['solar']['cf']
+
+# %%
+cap_fac_qt = cf_era5_fine_bc['onwind']['cf_winter_ts'].quantile(
+    q=0.2, dim='time')
+cap_fac_qt = sput.check_dimensions(cap_fac_qt)
+im = gplt.plot_map(cap_fac_qt,
+              title=title if s == 0 else None,
+              vertical_title=f'{sname} capacity factor \n{sd} - {ed}' if idx == 0 else None,
+              y_title=1.2,
+              cmap='cmo.thermal',
+              levels=25,
+              tick_step=5,
+              label='Capacity Factor [a.u.]',
+              vmin=0.0,
+              vmax=0.06,
+              lon_range=lon_range_ger,
+              lat_range=lat_range_ger,
+              plot_borders=True)
