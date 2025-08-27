@@ -114,7 +114,8 @@ ncols = len(cf_dicts)
 nrows = len(sources) + 1
 im_cfs = gplt.create_multi_plot(
     nrows=nrows, ncols=ncols,
-    hspace=0.1,
+    hspace=-0.2,
+    wspace=0.17,
     projection='PlateCarree')
 
 threshold = 0.02
@@ -135,7 +136,6 @@ for idx, (res, cf_dict_era5) in enumerate(cf_dicts.items()):
         sd, ed = tu.get_time_range(
             cf_dict_era5[sname]['cf_ts'], asstr=True, m=False, d=False)
 
-        lsm = lsm_fine if gs == fine_res else lsm_coarse
         cap_fac = cf_dict_era5[sname]['cf']
         cap_fac = sput.check_dimensions(cap_fac)
 
@@ -144,66 +144,94 @@ for idx, (res, cf_dict_era5) in enumerate(cf_dicts.items()):
                       title=title if s == 0 else None,
                       vertical_title=f'{sname} capacity factor \n{sd} - {ed}' if idx == 0 else None,
                       y_title=1.2,
-                      mask=mask,
+                      #   mask=mask,
                       cmap='cmo.thermal',
-                      levels=25,
+                    #   levels=25,
                       tick_step=5,
-                      label='Capacity Factor [a.u.]',
                       vmin=0.08 if sname == 'solar' else 0.0,
                       vmax=.14 if sname == 'solar' else 0.4,
                       lon_range=lon_range_ger,
                       lat_range=lat_range_ger,
-                      plot_borders=True)
+                      plot_borders=True,
+                      orientation='vertical',
+                      label='Capacity Factor [a.u.]' if idx == ncols -
+                      1 else None,
+                      )
 
+    # window = int(num_hours / hourly_res)  # 8*6 = 48 hours
+    # cf_ts_mean = tu.rolling_timemean(cf_onwind_solar, window=window)
+    # df_local_onwind, _ = tu.compute_evs(cf_ts_mean,
+    #                                     threshold=threshold,
+    #                                     threshold_type='lower',
+    #                                     get_mask=True)
+
+    # num_years = tu.count_unique_years(df_local_onwind)
+    # num_dfs_cell = df_local_onwind.sum(dim='time')
+    # gplt.plot_map(num_dfs_cell/num_years,
+    #               ax=im_cfs['ax'][ncols*len(sources) + idx],
+    #               plot_borders=True,
+    #               vmin=3,
+    #               vmax=18,
+    #               label='No. of Dunkelflauten / Year',
+    #               #   title=title,
+    #               vertical_title=f'No. of Dunkelflaute events \n{sd} - {ed}' if idx == 0 else None,
+    #               cmap='cmo.amp',
+    #               leftcolor='white',
+    #               mask=mask,
+    #               levels=15,
+    #               tick_step=5,
+    #               lon_range=lon_range_ger,
+    #               lat_range=lat_range_ger,
+    #               )
+
+    quantile = 0.03
     num_hours = 48
-
     window = int(num_hours / hourly_res)  # 8*6 = 48 hours
-    cf_ts_mean = tu.rolling_timemean(cf_onwind_solar, window=window)
-    df_local_onwind, _ = tu.compute_evs(cf_ts_mean,
-                                        threshold=threshold,
-                                        threshold_type='lower',
-                                        get_mask=True)
-
-    num_years = tu.count_unique_years(df_local_onwind)
-    num_dfs_cell = df_local_onwind.sum(dim='time')
-    gplt.plot_map(num_dfs_cell/num_years,
-                  ax=im_cfs['ax'][ncols*len(sources) + idx],
-                  plot_borders=True,
-                  vmin=3,
-                  vmax=18,
-                  label='No. of Dunkelflauten / Year',
-                  #   title=title,
-                  vertical_title=f'No. of Dunkelflaute events \n{sd} - {ed}' if idx == 0 else None,
-                  cmap='cmo.amp',
-                  leftcolor='white',
-                  mask=mask,
-                  levels=15,
-                  tick_step=5,
-                  lon_range=lon_range_ger,
-                  lat_range=lat_range_ger,
-                  )
-    break
+    ts = cf_dict_era5['all']['cf_winter_ts'] if res != 'DS BC 0.25' else cf_dicts['GT 0.25']['all']['cf_winter_ts']
+    cf_ts_mean = tu.rolling_timemean(
+        ts, window=window)
+    cap_fac_qt = cf_ts_mean.quantile(q=quantile, dim='time')
+    cap_fac_qt = sput.check_dimensions(cap_fac_qt)
+    risk = cap_fac_qt
+    im = gplt.plot_map(
+        risk,
+        ax=im_cfs['ax'][ncols*len(sources) + idx],
+        vertical_title=r'Low capacity factors (Q$_{{0.05}}$)'+f'\nNov - Jan ({sd}-{ed})' if idx == 0 else None,
+        y_title=1.2,
+        cmap='cmo.oxy_r',
+        # mask=mask,
+        # levels=25,
+        tick_step=5,
+        vmin=0.02,
+        vmax=0.06,
+        lon_range=lon_range_ger,
+        lat_range=lat_range_ger,
+        plot_borders=True,
+        orientation='vertical',
+        label=r'Quantile$_{0.05}$(CF) [a.u.]' if idx == ncols - 1 else None,
+    )
+    # break
 
 savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res_ERA5_{tr_str}.png"
 
 gplt.save_fig(savepath_cfs, fig=im_cfs['fig'])
-# %%
-cf_era5_fine_bc['solar']['cf']
+
 
 # %%
-cap_fac_qt = cf_era5_fine_bc['onwind']['cf_winter_ts'].quantile(
-    q=0.2, dim='time')
+quantile = 0.2
+cap_fac_qt = cf_era5_fine_bc['all']['cf_winter_ts'].quantile(
+    q=quantile, dim='time')
 cap_fac_qt = sput.check_dimensions(cap_fac_qt)
 im = gplt.plot_map(cap_fac_qt,
-              title=title if s == 0 else None,
-              vertical_title=f'{sname} capacity factor \n{sd} - {ed}' if idx == 0 else None,
-              y_title=1.2,
-              cmap='cmo.thermal',
-              levels=25,
-              tick_step=5,
-              label='Capacity Factor [a.u.]',
-              vmin=0.0,
-              vmax=0.06,
-              lon_range=lon_range_ger,
-              lat_range=lat_range_ger,
-              plot_borders=True)
+                   title=title if s == 0 else None,
+                   vertical_title=f'{sname} capacity factor \n{sd} - {ed}' if idx == 0 else None,
+                   y_title=1.2,
+                   cmap='cmo.thermal',
+                   levels=25,
+                   tick_step=5,
+                   label='Capacity Factor [a.u.]',
+                   vmin=0.0,
+                   vmax=0.06,
+                   lon_range=lon_range_ger,
+                   lat_range=lat_range_ger,
+                   plot_borders=True)

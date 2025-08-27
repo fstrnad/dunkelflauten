@@ -300,24 +300,19 @@ def compute_cf_dict(cutout_country, config,
         cf_dict = correct_cf_dict_opsd(cf_dict, opsd_dict, method=qm_method)
 
     weight_arr = []
-    weight_arr_locs = []
     ts_all = 0
-    cap_all = 0
     for source in cf_dict.keys():
         weight = cf_dict[source]['weight']
         ts = cf_dict[source]['ts']
-        cap_all += cf_dict[source]['cf'] * weight
         ts_all += ts * weight
         weight_arr.append(weight)
 
     sum_weights = np.sum(weight_arr)
-    print(f'Sum of weights: {sum_weights}')
     ts_all = ts_all / sum_weights
-    cap_all = cap_all / sum_weights
     cf_dict['all'] = {'ts': ts_all}
-    cf_dict['all']['cf'] = cap_all
     cf_dict['all']['cf_ts'] = combined_cf_maps(cf_dict,
                                                sources=['onwind', 'solar'])
+    cf_dict['all']['cf'] = cf_dict['all']['cf_ts'].mean(dim='time')
     cf_dict['all']['weights'] = weight_arr
 
     if lsm is not None:
@@ -327,6 +322,18 @@ def compute_cf_dict(cutout_country, config,
 
         cap_fac_off_ts = cf_dict['offwind']['cf_ts'].copy()
         cf_dict['all']['cf_ts'] = xr.where(lsm > lsm_threshold, cf_dict['all']['cf_ts'], cap_fac_off_ts)
+
+    if winter_cfs:
+        gut.myprint(f'Computing winter capacity factors for all sources')
+        cf_winter_ts = tu.get_month_range_data(
+            cf_dict['all']['cf_ts'], start_month='Nov', end_month='Jan')
+        cf_dict['all']['cf_winter_ts'] = cf_winter_ts
+
+        cf_winter = tu.compute_timemean(
+            cf_winter_ts,
+            timemean='all'  # over all time points
+        )
+        cf_dict['all']['cf_winter'] = cf_winter
 
     return cf_dict
 

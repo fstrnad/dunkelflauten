@@ -131,8 +131,8 @@ fut.save_ds(ds=ds_samples_bc,
 # %%
 ds_dict = {'Coarse ERA5': ds_obs.load(),
            'Ground Truth ERA5': ds_gt.load(),
-           'Samples': ds_samples.load(),
-           'Samples Bias Corrected': ds_samples_bc.load(),
+           'Downscaled Samples': ds_samples.load(),
+           'Downscaled Samples Bias Corrected': ds_samples_bc.load(),
            }
 
 variable_dict = {
@@ -224,7 +224,7 @@ for idx, variable in enumerate(variables):
                                         variable_dict[variable]['vmax']),
                                  loc='under',
                                  ncol_legend=4,
-                                 box_loc=(0.2, -0.2)
+                                 box_loc=(0., -0.2)
                                  )
         if ds_type == 'Ground Truth ERA5':
             gplt.fill_between(ax=this_im['ax'],
@@ -232,8 +232,9 @@ for idx, variable in enumerate(variables):
                               y=this_im['hc'],
                               y2=0,
                               color=colors[i],
-                              alpha=0.15,
+                              alpha=0.25,
                               )
+
 
 savepath = f'{plot_dir}/distributions/distribution_values_{tr_distr}_tm{timemean}_log_{use_log}.png'
 gplt.save_fig(savepath=savepath)

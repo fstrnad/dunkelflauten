@@ -99,7 +99,10 @@ tr_str = '1980-01-01_2025-01-01'
 cf_dict_path_era5 = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{gs_era5}_{tr_str}.npy'
 
 cf_dict_era5 = fut.load_np_dict(cf_dict_path_era5)
-cf_dict_era5['all']['ts_uncorr'] = config['technology']['solar']['weight']*cf_dict_era5['solar']['ts_uncorr'] + config['technology']['offwind']['weight']*cf_dict_era5['offwind']['ts_uncorr'] + config['technology']['onwind']['weight']*cf_dict_era5['onwind']['ts_uncorr']
+cf_dict_era5['all']['ts_uncorr'] = config['technology']['solar']['weight']*cf_dict_era5['solar']['ts_uncorr'] + config['technology']['offwind']['weight'] * \
+    cf_dict_era5['offwind']['ts_uncorr'] + \
+    config['technology']['onwind']['weight'] * \
+    cf_dict_era5['onwind']['ts_uncorr']
 
 
 # %%
@@ -109,6 +112,8 @@ reload(of)
 lsm = of.open_nc_file(lsm_file_country)
 # %%
 # GCM average of capacity factors
+
+
 def get_gcm_average(ssp, cf_dicts,
                     source_types=['onwind', 'offwind',
                                   'solar', 'all']):
@@ -127,6 +132,7 @@ def get_gcm_average(ssp, cf_dicts,
         source_cf_gcm_dict[source] = (av_cf_gcm, std_cf_gcm)
 
     return source_cf_gcm_dict
+
 
 # %%
 reload(gplt)
@@ -239,6 +245,8 @@ source_im_dict = {
     'all': {'ls': 'solid', 'y_range': (0.18, 0.23)},
 }
 
+lon_range_ger = [5, 16]
+lat_range_ger = [47, 55.5]
 
 subdevide = 12  # 4 tps per day
 window = int(365 * subdevide)
@@ -249,12 +257,14 @@ time_range = None
 ssp = 'historical'
 
 sources = ['onwind', 'offwind', 'solar', 'all']
-im_pic = gplt.create_multi_plot(nrows=2, ncols=len(sources),
-                                projection_arr=[
-                                    None, None, None, None,
-    'PlateCarree', 'PlateCarree', 'PlateCarree', 'PlateCarree',],
-    hspace=0.5, wspace=0.2,
-    fig_size=(22, 6))
+im_pic = gplt.create_multi_plot(
+    nrows=2, ncols=len(sources),
+    projection_arr=[
+        None, None, None, None,
+        'PlateCarree', 'PlateCarree', 'PlateCarree', 'PlateCarree',],
+    hspace=0.4, wspace=0.3,
+    figsize=(18, 9)
+)
 
 all_gcms = ['ERA5'] + gcms
 tr_ref = list(gcm_ssp_cf_dict[all_gcms[1]][ssp].keys())[
@@ -277,7 +287,7 @@ for idx, source in enumerate(sources):
             continue
 
         vertical_title = f'Ensbemble Mean {ssp} \n({sd_tr} - {ed_tr})'
-        vertical_title_diff = f'Diff. Ensbemble Mean to ERA5 \n({sd_tr} - {ed_tr})'
+        vertical_title_diff = f'Diff. Ensb. Mean to ERA5 \n({sd_tr} - {ed_tr})'
 
         label = f'{gcm}'
         data_arr = []
@@ -286,9 +296,7 @@ for idx, source in enumerate(sources):
         da = cap['ts_uncorr'] if gcm == 'ERA5' else cap['ts']
         if gcm == 'ERA5':
             da = tu.get_time_range_data(da, time_range=(sd, ed))
-            if source == 'all':
-                # use the uncorrect capacity factor
-                print(da)
+
         data_arr.append(da)
 
         if window > 1:
@@ -307,11 +315,15 @@ for idx, source in enumerate(sources):
         trend = np.polyval(coeffs, num_tps)
         trend = xr.DataArray(
             trend, coords={'time': da.time}, dims='time')
+
+        vertical_title = f'Spatial Mean ({sd_tr} - {ed_tr})'
         im = gplt.plot_2d(x=da.time,
                           y=da.values,
                           ax=im_pic['ax'][idx],
                           #  power_pv.values,
                           title=f"{source} CF",
+                          vertical_title=vertical_title if idx == 0 else None,
+                          x_title_offset=-0.45,
                           color=gplt.colors[idx_gcm],
                           ls=source_im_dict[source]['ls'],
                           ylabel="Capacity Factor [a.u.]" if idx == 0 else None,
@@ -323,14 +335,13 @@ for idx, source in enumerate(sources):
                           y_err=ts_std.data,
                           label=label if idx == len(sources) - 1 else None,
                           loc='under',
-                          box_loc=(-2.95, -0.2),
+                          box_loc=(-4, -0.2),
                           ncol_legend=6,
                           zorder=10 if gcm == 'ERA5' else 1,
                           )
 
-
     cf, std_cf = source_cf_gcm_dict[source]
-    cf_0 = cf_0_dict[source]['cf']
+    cf_0 = cf_dict_era5[source]['cf']
     diff = cf - cf_0
     diff = sput.check_dimensions(diff)
     if source == 'onwind' or source == 'solar':
@@ -345,19 +356,23 @@ for idx, source in enumerate(sources):
     gplt.plot_map(diff,
                   ax=im_pic['ax'][len(sources) + idx],
                   vertical_title=vertical_title_diff if idx == 0 else None,
+                  x_title_offset=-0.45,
                   vmin=vmin,
                   vmax=-vmin,
                   levels=20,
                   tick_step=5,
                   cmap='cmo.tarn_r',
                   centercolor='white',
-                  label=f'Diff. CMIP6-ERA5',
+                  label=f'Diff. CMIP6-ERA5' if idx == len(
+                      sources) - 1 else None,
+                  orientation='vertical',
+                  extend='both',
+                  lon_range=lon_range_ger,
+                  lat_range=lat_range_ger,
                   plot_borders=True)
 
 
-savepath = f"{config['plot_dir']}/capacities_cmip6/all_gcms_{ssp}_{gs_dws}_cf_time_period.png"
-gplt.save_fig(savepath, fig=im['fig'])
+savepath = f"{config['plot_dir']}/capacities_cmip6/all_gcms_{ssp}_cf_time_period.png"
+# gplt.save_fig(savepath, fig=im['fig'])
 
 # %%
-
-

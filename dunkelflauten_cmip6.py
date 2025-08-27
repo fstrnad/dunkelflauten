@@ -26,7 +26,7 @@ import yaml
 if os.getenv("HOME") == '/home/ludwig/fstrnad80':
     cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
     data_dir = f'{cmip6_dir}/downscaling/'
-    era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/climate_data/Europe"
+    era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
     with open('./config_cluster.yaml', 'r') as file:
         config = yaml.safe_load(file)
 else:
@@ -95,30 +95,38 @@ gs_era5 = 0.25
 tr_str = '1980-01-01_2025-01-01'
 cf_dict_path_era5 = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{gs_era5}_{tr_str}.npy'
 cf_dict_era5 = fut.load_np_dict(cf_dict_path_era5)
-
+# %%
+# lsm file
+reload(of)
+coarse_res = 1.0
+fine_res = 0.25
+lsm_file_country = f'{era5_dir}/{country_name}_nn/{fine_res}/lsm.nc'
+lsm_fine = of.open_nc_file(lsm_file_country)
+lsm_file_coarse = f'{era5_dir}/{country_name}_av/{coarse_res}/lsm.nc'
+lsm_coarse = of.open_nc_file(lsm_file_coarse)
 # %%  Compute all local dunkelflaute events
 reload(tu)
 
 
 def local_dfs(cf_dict, num_hours=48, hourly_res=6, threshold=0.02):
-    cf_onwind_solar = cfu.combined_cf_maps(cf_dict,
-                                           sources=['onwind', 'solar'],)
+    cf_onwind_solar = cf_dict['all']['cf_ts']
     cf_onwind_solar = sput.rename_dims(cf_onwind_solar)
 
     window = int(num_hours / hourly_res)  # 8*6 = 48 hours
     cf_ts_mean = tu.rolling_timemean(cf_onwind_solar, window=window)
-    df_local_onwind, _ = tu.compute_evs(cf_ts_mean,
-                                        threshold=threshold,
-                                        threshold_type='lower',
-                                        #    max_rel_share=0.02,
-                                        get_mask=True)
+    df_local, _ = tu.compute_evs(cf_ts_mean,
+                                 threshold=threshold,
+                                 threshold_type='lower',
+                                 #    max_rel_share=0.02,
+                                 get_mask=True)
 
-    return df_local_onwind
+    return df_local
 
 
-def local_dfs_per_year(df_local_onwind):
-    num_years = tu.count_unique_years(df_local_onwind)
-    num_dfs_cell = df_local_onwind.sum(dim='time')  # done later
+def local_dfs_per_year(df_local):
+    num_years = tu.count_unique_years(df_local)
+    df_local = tu.remove_consecutive_ones(df_local)
+    num_dfs_cell = df_local.sum(dim='time')  # done later
     dfs_per_year = num_dfs_cell / num_years
 
     return dfs_per_year
@@ -368,7 +376,7 @@ ncols = 3
 nrows = 2
 im = gplt.create_multi_plot(nrows=nrows, ncols=ncols,
                             figsize=(15, 10),
-                            hspace=0.6)
+                            hspace=0.4)
 for idx, ssp in enumerate(ssps):
     for idx_gcm, gcm in enumerate(['ERA5'] + gcms):
         if gcm != 'ERA5':
@@ -382,7 +390,7 @@ for idx, ssp in enumerate(ssps):
                 df_dict_country[gcm],
                 df_dict_country['MPI-ESM1-2-HR'][ssp]
             )
-            
+
             len_dfl = len_df_country[gcm]
             len_dfl = tu.get_time_range_data(
                 len_dfl,
@@ -394,9 +402,10 @@ for idx, ssp in enumerate(ssps):
         fit_vals, slope, p = sut.linear_regression_xarray(dfl_per_year)
         slope *= 365
         ls = '--' if gcm == 'ERA5' else '-'
-        lw = 4 if gcm == 'ERA5' else 1
+        lw = 4 if gcm == 'ERA5' else 2
 
-        dfl_per_year = tu.rolling_timemean(dfl_per_year, window=20, fill_lims=True)
+        dfl_per_year = tu.rolling_timemean(
+            dfl_per_year, window=20, fill_lims=True)
         avg_len = len_dfl.mean()
 
         label = f'{gcm}' if idx == 0 else None
@@ -408,7 +417,7 @@ for idx, ssp in enumerate(ssps):
                      ax=im['ax'][idx],
                      #  plot_type='bar',
                      title=ssp,
-                    #  label=label,
+                     #  label=label,
                      ls_arr=[ls, ls],
                      color=gplt.colors[idx_gcm],
                      mk_arr=['', ''],
@@ -417,9 +426,9 @@ for idx, ssp in enumerate(ssps):
                      ncol_legend=1,
                      loc='outside',
                      #  xlabel='Year',
-                     ylabel='No. of Dunkelflaute events' if idx == 0 else None,
+                     ylabel='No. of events/year' if idx == 0 else None,
                      rot=45,
-                      ylim=(0, 5),
+                     ylim=(0, 5),
                      #  box_loc=(-0.05, -0.2)
                      )
 
@@ -427,19 +436,19 @@ for idx, ssp in enumerate(ssps):
             ax=im['ax'][idx + ncols],
             data=(len_dfl.data*hourly_res + 42)/24,
             xlabel='Length of Dunkelflaute events [days]',
-            ylabel='No. of events' if idx == 0 else None,
-            density=False,
+            ylabel='Density' if idx == 0 else None,
+            density=True,
             xlim=(1.9, 8),
-            # ylim=
+            ylim=(0.0, 0.9),
             lw=lw,
             ls=ls,
             label=label,
             color=gplt.colors[idx_gcm],
             # mk='o',
-            nbins=8,
+            nbins=10,
             loc='under',
             box_loc=(-0.05, -0.25),
-            ncol_legend=3
+            ncol_legend=6
         )
 
 savepath = f'{config['plot_dir']}/dunkelflauten_cmip6/ts_df_year_all_ssps.png'
@@ -523,10 +532,16 @@ for ssp, dfs in df_dict_local[gcm].items():
 # Average of dunkelflaute per year over multiple GCMs
 
 
-def get_gcm_average(ssp, df_dict_local, av_type='mean'):
+def get_gcm_average(ssp, df_dict_local,
+                    time_range=None, av_type='mean'):
     gcm_arr = []
     for gcm in gcms:
-        dfs_per_year = local_dfs_per_year(df_dict_local[gcm][ssp])
+        df_local = df_dict_local[gcm][ssp]
+        dfs_per_year = local_dfs_per_year(
+            tu.get_time_range_data(df_local,
+                                   time_range=time_range)
+        )
+
         gcm_arr.append(dfs_per_year)
     if av_type == 'mean':
         av_df_gcm = xr.concat(
@@ -596,9 +611,13 @@ savepath = f"{config['plot_dir']}/local_risks/CMIP6/ensemble_gcms_{ssp}_{gs_dws}
 gplt.save_fig(savepath, fig=im['fig'])
 
 # %%
+# Compare ERA5 to historical, ssp245, ssp585 all scenarios
+
+time_future = ('2080-01-01', '2100-12-31')
 dfs_per_year_era5 = local_dfs_per_year(df_dict_local['ERA5'])
 
-vmin = -20
+vmin = -3
+vmax = -vmin
 ncols = len(ssps)
 im_df = gplt.create_multi_plot(
     nrows=4, ncols=ncols,
@@ -611,18 +630,30 @@ mask = get_cf_mask(cf_dict_era5)
 lon_range_ger = [5, 16]
 lat_range_ger = [47, 55.5]
 
-label = 'Diff. DF-events/Year (CMIP6-ERA5)'
+label = 'Diff. events/year (CMIP6-ERA5)'
+
 
 for idx_ssp, ssp in enumerate(ssps):
-    av_dfs, std_dfs = get_gcm_average(ssp=ssp, df_dict_local=df_dict_local)
+    if ssp == 'historical':
+        av_dfs, std_dfs = get_gcm_average(ssp=ssp, df_dict_local=df_dict_local)
+        ref_ts = gcm_ssp_cf_dict[gcm][ssp]['all']['ts']
+    else:
+        av_dfs, std_dfs = get_gcm_average(ssp=ssp,
+                                          df_dict_local=df_dict_local,
+                                          time_range=time_future)
+        ref_ts = tu.get_time_range_data(
+            gcm_ssp_cf_dict[gcm][ssp]['all']['ts'],
+            time_range=time_future)
     max_dfs, _ = get_gcm_average(ssp=ssp,
                                  df_dict_local=df_dict_local,
-                                 av_type='max')
+                                 av_type='max',
+                                 time_range=None if ssp == 'historical' else time_future)
     min_dfs, _ = get_gcm_average(ssp=ssp,
                                  df_dict_local=df_dict_local,
-                                 av_type='min')
+                                 av_type='min',
+                                 time_range=None if ssp == 'historical' else time_future)
 
-    sd, ed = tu.get_time_range(gcm_ssp_cf_dict[gcm][ssp]['all']['ts'],
+    sd, ed = tu.get_time_range(ref_ts,
                                asstr=True, m=False, d=False)
     tr = f'{sd}-{ed}'
 
@@ -630,12 +661,12 @@ for idx_ssp, ssp in enumerate(ssps):
     diff_max = max_dfs - dfs_per_year_era5
     diff_min = min_dfs - dfs_per_year_era5
 
-    gplt.plot_map(diff,
+    gplt.plot_map(diff * lsm_fine,
                   ax=im_df['ax'][idx_ssp],
                   plot_borders=True,
                   #   significance_mask=xr.where(mask, 0, 1),
                   vmin=vmin,
-                  vmax=-vmin,
+                  vmax=vmax,
                   label=label if idx_ssp == ncols - 1 else None,
                   orientation='vertical',
                   title=f'{ssp} ({tr})',
@@ -645,17 +676,17 @@ for idx_ssp, ssp in enumerate(ssps):
                   levels=20,
                   tick_step=4,
                   y_title=1.2,
-                  mask=mask,
+                  #   mask=mask,
                   lon_range=lon_range_ger,
                   lat_range=lat_range_ger,
                   )
 
-    gplt.plot_map(diff_max,
+    gplt.plot_map(diff_max*lsm_fine,
                   ax=im_df['ax'][idx_ssp + ncols*1],
                   plot_borders=True,
                   #   significance_mask=xr.where(mask, 0, 1),
                   vmin=vmin,
-                  vmax=-vmin,
+                  vmax=vmax,
                   label=label if idx_ssp == ncols - 1 else None,
                   orientation='vertical',
                   vertical_title=f'Ensemble Max' if idx_ssp == 0 else None,
@@ -663,17 +694,17 @@ for idx_ssp, ssp in enumerate(ssps):
                   centercolor='white',
                   levels=20,
                   tick_step=4,
-                  mask=mask,
+                  #   mask=mask,
                   lon_range=lon_range_ger,
                   lat_range=lat_range_ger,
                   )
 
-    gplt.plot_map(diff_min,
+    gplt.plot_map(diff_min*lsm_fine,
                   ax=im_df['ax'][idx_ssp + ncols*2],
                   plot_borders=True,
                   #   significance_mask=xr.where(mask, 0, 1),
                   vmin=vmin,
-                  vmax=-vmin,
+                  vmax=vmax,
                   label=label if idx_ssp == ncols - 1 else None,
                   orientation='vertical',
                   vertical_title=f'Ensemble Min' if idx_ssp == 0 else None,
@@ -681,7 +712,7 @@ for idx_ssp, ssp in enumerate(ssps):
                   centercolor='white',
                   levels=20,
                   tick_step=4,
-                  mask=mask,
+                  #   mask=mask,
                   lon_range=lon_range_ger,
                   lat_range=lat_range_ger,
                   )
@@ -690,8 +721,8 @@ for idx_ssp, ssp in enumerate(ssps):
                   ax=im_df['ax'][idx_ssp + ncols*3],
                   plot_borders=True,
                   vmin=0,
-                  vmax=10,
-                  label='Std No. of Dunkelflauten / Year' if idx_ssp == ncols - 1 else None,
+                  vmax=vmax/2,
+                  label='Std No. of events / Year' if idx_ssp == ncols - 1 else None,
                   orientation='vertical',
                   #   title=f'{tr_str}',
                   vertical_title=f'Ensemble std' if idx_ssp == 0 else None,
@@ -699,10 +730,11 @@ for idx_ssp, ssp in enumerate(ssps):
                   leftcolor='white',
                   tick_step=5,
                   levels=20,
-                  mask=mask,
+                  #   mask=mask,
                   lon_range=lon_range_ger,
                   lat_range=lat_range_ger,
                   )
+
 savepath = f"{config['plot_dir']}/local_risks/CMIP6/df_local_compare_ensemble_era5_{gs_dws}_{threshold}.png"
 
 gplt.save_fig(savepath)
@@ -778,3 +810,36 @@ for idx_ssp, ssp in enumerate(['ssp245', 'ssp585']):
 savepath = f'{config['plot_dir']}/local_risks/CMIP6/dunkelflauten_local_era5_time_series_{sd}_{ed}.png'
 gplt.save_fig(savepath, fig=im['fig'])
 # %%
+gcm_ssp_cf_dict.keys()
+# %%
+gcm_ssp_cf_dict['MPI-ESM1-2-HR']['ssp245']['all'].keys()
+# %%
+reload(gplt)
+winter_cfs_cmip = gcm_ssp_cf_dict['MPI-ESM1-2-HR']['ssp245']['all']['cf_winter_ts']
+num_hours = 48
+window = int(num_hours / hourly_res)
+winter_cfs_cmip = tu.rolling_timemean(
+    winter_cfs_cmip, window=window)
+
+lon_range_ger = [5, 16]
+lat_range_ger = [47, 55.5]
+
+quantile = 0.05
+cap_fac_qt = winter_cfs_cmip.quantile(q=quantile, dim='time')
+cap_fac_qt = sput.check_dimensions(cap_fac_qt)
+risk = cap_fac_qt
+im = gplt.plot_map(risk,
+                    vertical_title=f'CF-TS Quantile {quantile} \nNov-Jan ({sd} - {ed})' if idx == 0 else None,
+                    y_title=1.2,
+                    cmap='cmo.oxy_r',
+                    #    mask=mask,
+                    # levels=25,
+                    tick_step=5,
+                    vmin=0.02,
+                    vmax=0.06,
+                    # lon_range=lon_range_ger,
+                    # lat_range=lat_range_ger,
+                    plot_borders=True,
+                    orientation='vertical',
+                    label=r'Quantile$_{0.05}$(CF) [a.u.]' if idx == ncols - 1 else None,
+                    )
