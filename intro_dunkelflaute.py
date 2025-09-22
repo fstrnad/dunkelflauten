@@ -52,7 +52,6 @@ tr_str = '1980-01-01_2025-01-01'
 cf_dict_path_era5 = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{gs_era5}_{tr_str}.npy'
 
 cf_dict = fut.load_np_dict(cf_dict_path_era5)
-del cf_dict['wind']
 ts_offwind = cf_dict['offwind']['ts']
 ts_onwind = cf_dict['onwind']['ts']
 ts_solar = cf_dict['solar']['ts']
@@ -97,6 +96,8 @@ ts_df_mean_short = tu.get_time_range_data(ts_df_mean,
                                           time_range=short_time_range)
 tps_dfl_short = tu.get_time_range_data(tps_dfl,
                                        time_range=short_time_range)
+tps_dfl_short_values = tu.get_sel_tps_ds(ts_df_mean_short,
+                                         tps=tps_dfl_short.time.data)
 
 data_arr = []
 timemean = 'dayofyear'
@@ -195,10 +196,9 @@ gplt.plot_2d(
     rot=20,
     ax=ax3)
 
-tps_dfl_shor_values = ts_df_mean_short.sel(
-    time=tps_dfl_short.time.data)
+
 im_ax1 = gplt.plot_2d(x=[ts_df_mean_short.time.data, tps_dfl_short.time.data],
-                      y=[ts_df_mean_short, tps_dfl_shor_values],
+                      y=[ts_df_mean_short, tps_dfl_short_values],
                       ax=ax4,
                       title=f'Detect Dunkelflaute events',
                       label_arr=['48h-mean CF',
