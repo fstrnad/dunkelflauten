@@ -197,3 +197,4 @@ jobs/*
 
 *.sh
 *.nc
+.vscode/settings.json

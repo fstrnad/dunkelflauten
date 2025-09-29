@@ -62,10 +62,10 @@ gcms = [
     'IPSL-CM6A-LR',
     'CanESM5'
 ]
-
-overwrite = False  # Set to True if you want to overwrite existing files
-use_bc = True  # Set to True if you want to use bias-corrected data
 # %%
+overwrite = True  # Set to True if you want to overwrite existing files
+use_bc = True  # Set to True if you want to use bias-corrected data
+reload(cfu)
 for gcm in gcms:
     for ssp in ssps:
         time_ranges = tr_historical if ssp == 'historical' else tr_ssp
@@ -119,7 +119,8 @@ for gcm in gcms:
                     cutout_country=cutout_germany,
                     config=config,
                     country_name=country_name,
-                    correct_qm=False)
+                    correct_qm=False,
+                    winter_cfs=True)
 
                 fut.save_np_dict(cf_dict_cmip, savepath_dict,)
 # %%

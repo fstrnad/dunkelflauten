@@ -15,7 +15,7 @@ data:
 
 technology:
   onwind:
-    weight: 0.5
+    weight: 0.369
     resource:
       turbine: Vestas_V112_3MW
     fallback: #fallback values are chosen according to the values for Germany
@@ -23,7 +23,7 @@ technology:
       intercept: 0.01
   solar:
     correction_factor: 1.
-    weight: 0.44
+    weight: 0.577
     resource:
       panel: CSi
       orientation:
@@ -33,7 +33,7 @@ technology:
       slope: 0.81
       intercept: 0.0
   offwind:
-    weight: 0.06
+    weight: 0.054
     resource:
       turbine: NREL_ReferenceTurbine_5MW_offshore
     fallback:

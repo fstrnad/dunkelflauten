@@ -41,13 +41,12 @@ reload(fut)
 country_name = "Germany"
 
 fine_res = 0.25
-fine_res = 0.25
 cf_dict_tr = {}
 tr_historical = [
-    ('1980-01-01', '1990-01-01'),
-    ('1990-01-01', '2000-01-01'),
-    ('2000-01-01', '2010-01-01'),
-    ('2010-01-01', '2015-01-01'),
+    # ('1980-01-01', '1990-01-01'),
+    # ('1990-01-01', '2000-01-01'),
+    # ('2000-01-01', '2010-01-01'),
+    # ('2010-01-01', '2015-01-01'),
     ('1980-01-01', '2025-01-01'),]
 
 for (start_date, end_date) in tr_historical:
@@ -56,10 +55,16 @@ for (start_date, end_date) in tr_historical:
     savepath_dict = f'{config['data_dir']}/{country_name}/ERA5/cf/cf_dict_{fine_res}_{tr_str}.npy'
 
     if fut.exist_file(savepath_dict):
-        cf_dict_cmip = fut.load_np_dict(savepath_dict)
-        cf_dict_tr[tr_str] = cf_dict_cmip
+        cf_dict_era5 = fut.load_np_dict(savepath_dict)
+        cf_dict_tr[tr_str] = cf_dict_era5
     else:
         print(f'CF {tr_str} not found')
+
+# %%
+# lsm file
+reload(of)
+lsm_file_country = f'{era5_dir}/{country_name}_nn/{fine_res}/lsm.nc'
+lsm = of.open_nc_file(lsm_file_country)
 # %%
 # Plot the weights of the country
 reload(cnt)
@@ -142,15 +147,30 @@ ncols = len(cf_dict) - 1
 im = gplt.create_multi_plot(nrows=1, ncols=ncols,
                             projection='PlateCarree',
                             wspace=0.2)
+source_dict = {
+    'onwind': dict(vmin=0, vmax=.4, cmap='cmo.thermal'),
+    'offwind': dict(vmin=0, vmax=.5, cmap='cmo.thermal'),
+    'solar': dict(vmin=0, vmax=.2, cmap='cmo.thermal'),
+    'all': dict(vmin=0, vmax=.25, cmap='cmo.thermal'),
+}
 for idx, (sname, source) in enumerate(cf_dict.items()):
     if sname != 'wind':
         cap_fac = source['cf']
+        cap_fac = sput.check_dimensions(cap_fac)
+        if sname == 'onwind' or sname == 'solar':
+            cap_fac = xr.where(lsm > 0.5, cap_fac, np.nan)
+        elif sname == 'offwind':
+            cap_fac = xr.where(lsm < 0.5, cap_fac, np.nan)
+            cap_fac_off = cap_fac.copy()
+        elif sname == 'all':
+            cap_fac = xr.where(lsm > 0.5, cap_fac, cap_fac_off)
         gplt.plot_map(cap_fac,
                       ax=im['ax'][idx],
                       title=sname,
-                      vmin=0,
                       label='Capacity Factor [a.u.]',
-                      vmax=.2 if sname == 'solar' else 0.4,
+                      vmin=source_dict[sname]['vmin'],
+                      vmax=source_dict[sname]['vmax'],
+                      cmap=source_dict[sname]['cmap'],
                       plot_borders=True)
 
 savepath = f"{config['plot_dir']}/capacities_era5/cf_map_{country_name}_{fine_res}.png"
