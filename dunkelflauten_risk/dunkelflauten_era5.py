@@ -1,6 +1,6 @@
 # %%
 import geoutils.utils.statistic_utils as sut
-import cf_utils as cfu
+import capacity_factors.cf_utils as cfu
 from scipy import stats
 from matplotlib.gridspec import GridSpec
 from cartopy.crs import PlateCarree as plate

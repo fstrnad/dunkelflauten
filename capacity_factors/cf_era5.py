@@ -16,7 +16,7 @@ import atlite as at
 from importlib import reload
 import geoutils.countries.countries as cnt
 import geoutils.countries.capacities as cap
-import cf_utils as cfu
+import capacity_factors.cf_utils as cfu
 import os
 import yaml
 # %%

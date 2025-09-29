@@ -1,7 +1,7 @@
 # %%
 from tqdm import tqdm
 import sys
-import cf_utils as cfu
+import capacity_factors.cf_utils as cfu
 import geoutils.utils.met_utils as mut
 import geoutils.geodata.solar_radiation as sr
 import pre_processing.workaround_fsr as wf
