@@ -8,7 +8,7 @@ surface_solar_radiation_downwards ssrd -> albedo, influx_diffuse (=ssrd-fdir)
 toa_incident_solar_radiation tisr -> influx_toa
 total_sky_direct_solar_radiation_at_surface fdir -> influx_direct
 """
-import workaround_fsr as wf
+import pre_processing.workaround_fsr as wf
 import geoutils.geodata.solar_radiation as sr
 import geoutils.utils.met_utils as mut
 import geoutils.cutouts.prepare_cutout as pc

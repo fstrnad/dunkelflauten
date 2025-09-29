@@ -1,6 +1,6 @@
 import cmethods as cm
 import geoutils.geodata.solar_radiation as sr
-import workaround_fsr as wf
+import pre_processing.workaround_fsr as wf
 import geoutils.utils.statistic_utils as sut
 import pandas as pd
 import numpy as np
