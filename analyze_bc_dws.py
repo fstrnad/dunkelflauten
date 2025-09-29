@@ -31,10 +31,10 @@ if os.getenv("HOME") == '/home/ludwig/fstrnad80':
     era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
     with open('./config_cluster.yaml', 'r') as file:
         config = yaml.safe_load(file)
-    plot_dir = "/mnt/lustre/home/ludwig/fstrnad80/plots/dunkelflauten/downscaling_cmip6/"
+    plot_dir = "/mnt/lustre/home/ludwig/fstrnad80/plots/dunkelflauten/bias_correction/"
 
 else:
-    plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
+    plot_dir = "/home/strnad/plots/dunkelflauten/bias_correction/"
     data_dir = "/home/strnad/data/CMIP6/downscaling/"
     cmip6_dir = "/home/strnad/data/CMIP6/"
     era5_dir = "/home/strnad/data/climate_data/Europe"
