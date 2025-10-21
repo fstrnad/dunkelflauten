@@ -30,7 +30,7 @@ if os.getenv("HOME") == '/home/ludwig/fstrnad80':
     cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
     data_dir = f'{cmip6_dir}/downscaling/'
     era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
-    with open('./config_cluster.yaml', 'r') as file:
+    with open('../config_cluster.yaml', 'r') as file:
         config = yaml.safe_load(file)
     plot_dir = "/mnt/lustre/home/ludwig/fstrnad80/plots/dunkelflauten/methods/"
 
@@ -39,10 +39,8 @@ else:
     data_dir = "/home/strnad/data/CMIP6/downscaling/"
     cmip6_dir = "/home/strnad/data/CMIP6/"
     era5_dir = "/home/strnad/data/climate_data/Europe"
-    with open('./config.yaml', 'r') as file:
+    with open('../config.yaml', 'r') as file:
         config = yaml.safe_load(file)
-# %%
-# Plot a Figure that summarizes the process how to get the dunkelflauten data
 
 # 1. Load the data
 gs = .25
@@ -65,7 +63,8 @@ cutout_germany = at.Cutout(savepath)
 lon_range, lat_range = sput.get_lon_lat_range(cutout_germany.data)
 
 # %%
-# Plot the capacify factor time series for whole germany
+# Plot a Figure that summarizes the process how to get the dunkelflauten data
+
 reload(tu)
 df_type = 'all'
 ts_df = cf_dict[df_type]['ts']
@@ -276,7 +275,7 @@ gplt.plot_2d(x=dfl_per_month.time.data,
              ylim=(0, 1.05),
              )
 
-savepath = f'{plot_dir}/dunkelflauten_overview.png'
+savepath = f'{plot_dir}/dunkelflauten_overview.pdf'
 gplt.save_fig(savepath=savepath)
 
 # %%

@@ -1,13 +1,6 @@
 # %%
 from tqdm import tqdm
-import sys
-import capacity_factors.cf_utils as cfu
-import geoutils.utils.met_utils as mut
-import geoutils.geodata.solar_radiation as sr
-import pre_processing.workaround_fsr as wf
-import geoutils.utils.statistic_utils as sut
-from scipy import stats
-import pandas as pd
+import dunkelflauten.capacity_factors.cf_utils as cfu
 import numpy as np
 import xarray as xr
 import geoutils.preprocessing.open_nc_file as of
@@ -18,9 +11,7 @@ import geoutils.utils.general_utils as gut
 import geoutils.utils.file_utils as fut
 import atlite as at
 from importlib import reload
-import geoutils.countries.countries as cnt
 import geoutils.countries.capacities as cap
-import geoutils.cutouts.prepare_cutout as pc
 import os
 import yaml
 # %%
@@ -28,14 +19,14 @@ if os.getenv("HOME") == '/home/ludwig/fstrnad80':
     cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
     data_dir = f'{cmip6_dir}/downscaling/'
     era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
-    with open('./config_cluster.yaml', 'r') as file:
+    with open('../config_cluster.yaml', 'r') as file:
         config = yaml.safe_load(file)
 else:
     plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
     data_dir = "/home/strnad/data/CMIP6/downscaling/"
     cmip6_dir = "/home/strnad/data/CMIP6/"
     era5_dir = "/home/strnad/data/climate_data/Europe"
-    with open('./config.yaml', 'r') as file:
+    with open('../config.yaml', 'r') as file:
         config = yaml.safe_load(file)
 
 # %%
@@ -264,7 +255,7 @@ for idx, (sname, source) in enumerate(source_cf_gcm_dict.items()):
                       label=f'Diff. CF ERA5 (1980-2015)',
                       plot_borders=True)
 
-savepath_diff = f"{config['plot_dir']}/capacities_cmip6/cf_types_diff_ensemble_mean_{ssp}.png"
+savepath_diff = f"{config['plot_dir']}/capacities_cmip6/cf_types_diff_ensemble_mean_{ssp}.pdf"
 gplt.save_fig(savepath_diff, fig=im_diff['fig'])
 
 # %%
@@ -431,7 +422,7 @@ for idx, source in enumerate(sources):
                            plot_borders=True)
 
 
-savepath = f"{config['plot_dir']}/capacities_cmip6/all_gcms_{ssp}_cf_time_period.png"
+savepath = f"{config['plot_dir']}/capacities_cmip6/all_gcms_{ssp}_cf_time_period.pdf"
 gplt.save_fig(savepath, fig=im_pic['fig'])
 
 # %%

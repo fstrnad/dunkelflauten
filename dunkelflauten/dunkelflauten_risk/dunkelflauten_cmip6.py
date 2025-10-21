@@ -1,12 +1,7 @@
 # %%
-from copy import deepcopy as dcp
-import capacity_factors.cf_utils as cfu
-import geoutils.utils.met_utils as mut
-import geoutils.geodata.solar_radiation as sr
-import pre_processing.workaround_fsr as wf
+from tqdm import tqdm
+import dunkelflauten.capacity_factors.cf_utils as cfu
 import geoutils.utils.statistic_utils as sut
-from scipy import stats
-import pandas as pd
 import numpy as np
 import xarray as xr
 import geoutils.preprocessing.open_nc_file as of
@@ -15,11 +10,7 @@ import geoutils.utils.time_utils as tu
 import geoutils.utils.spatial_utils as sput
 import geoutils.utils.general_utils as gut
 import geoutils.utils.file_utils as fut
-import atlite as at
 from importlib import reload
-import geoutils.countries.countries as cnt
-import geoutils.countries.capacities as cap
-import geoutils.cutouts.prepare_cutout as pc
 import os
 import yaml
 # %%
@@ -27,14 +18,14 @@ if os.getenv("HOME") == '/home/ludwig/fstrnad80':
     cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
     data_dir = f'{cmip6_dir}/downscaling/'
     era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
-    with open('./config_cluster.yaml', 'r') as file:
+    with open('../config_cluster.yaml', 'r') as file:
         config = yaml.safe_load(file)
 else:
     plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
     data_dir = "/home/strnad/data/CMIP6/downscaling/"
     cmip6_dir = "/home/strnad/data/CMIP6/"
     era5_dir = "/home/strnad/data/climate_data/Europe"
-    with open('./config.yaml', 'r') as file:
+    with open('../config.yaml', 'r') as file:
         config = yaml.safe_load(file)
 
 # %%
@@ -155,6 +146,7 @@ def country_df_ts(cf_dict, df_type='all',
 
 
 # %%
+# DF dicts
 threshold_country = 0.06
 num_hours = 48
 hourly_res = 6
@@ -226,7 +218,7 @@ df_dict_local['ERA5'] = local_dfs(cf_dict_era5,
                                   hourly_res=hourly_res,
                                   threshold=threshold)
 
-for gcm in gcms:
+for gcm in tqdm(gcms):
     ssp_df_dict_local = {}
     for ssp in ssps:
         gcm_str = f'{gcm}_{ssp}'
@@ -345,7 +337,7 @@ for ssp, cf_dict_cmip in ssp_cf_dict.items():
                  ylim=(0, 9)
                  )
 
-    savepath = f'{config['plot_dir']}/dunkelflauten_cmip6/ts_df_{gcm_str}_{gs_dws}_{sd}_{ed}.png'
+    savepath = f'{config['plot_dir']}/dunkelflauten_cmip6/ts_df_{gcm_str}_{gs_dws}_{sd}_{ed}.pdf'
     gplt.save_fig(savepath)
 
 
@@ -452,7 +444,7 @@ for idx, ssp in enumerate(ssps):
             # ncol_legend=6
         )
 
-savepath = f'{config['plot_dir']}/dunkelflauten_cmip6/ts_df_year_all_ssps.png'
+savepath = f'{config['plot_dir']}/dunkelflauten_cmip6/ts_df_year_all_ssps.pdf'
 gplt.save_fig(savepath)
 
 # %%
@@ -736,7 +728,7 @@ for idx_ssp, ssp in enumerate(ssps):
                   lat_range=lat_range_ger,
                   )
 
-savepath = f"{config['plot_dir']}/local_risks/CMIP6/df_local_compare_ensemble_era5_{gs_dws}_{threshold}.png"
+savepath = f"{config['plot_dir']}/local_risks/CMIP6/df_local_compare_ensemble_era5_{gs_dws}_{threshold}.pdf"
 
 gplt.save_fig(savepath)
 # %%

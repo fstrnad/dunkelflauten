@@ -1,11 +1,5 @@
 # %%
-import capacity_factors.cf_utils as cfu
-import geoutils.utils.met_utils as mut
-import geoutils.geodata.solar_radiation as sr
-import pre_processing.workaround_fsr as wf
-import geoutils.utils.statistic_utils as sut
-from scipy import stats
-import pandas as pd
+import dunkelflauten.capacity_factors.cf_utils as cfu
 import numpy as np
 import xarray as xr
 import geoutils.preprocessing.open_nc_file as of
@@ -28,14 +22,14 @@ if os.getenv("HOME") == '/home/ludwig/fstrnad80':
     cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
     data_dir = f'{cmip6_dir}/downscaling/'
     era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
-    with open('./config_cluster.yaml', 'r') as file:
+    with open('../config_cluster.yaml', 'r') as file:
         config = yaml.safe_load(file)
 else:
     plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
     data_dir = "/home/strnad/data/CMIP6/downscaling/"
     cmip6_dir = "/home/strnad/data/CMIP6/"
     era5_dir = "/home/strnad/data/climate_data/Europe"
-    with open('./config.yaml', 'r') as file:
+    with open('../config.yaml', 'r') as file:
         config = yaml.safe_load(file)
 # %%
 fine_res = 0.25
@@ -213,7 +207,7 @@ for idx, (res, cf_dict_era5) in enumerate(cf_dicts.items()):
     )
     # break
 
-savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res_ERA5_{tr_str}.png"
+savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res_ERA5_{tr_str}.pdf"
 
 gplt.save_fig(savepath_cfs, fig=im_cfs['fig'])
 
@@ -270,7 +264,7 @@ gplt.plot_hline(y=0.06,
                 label='Threshold 0.06',
                 loc='outside')
 
-savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res_time_series.png"
+savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res_time_series.pdf"
 
 gplt.save_fig(savepath_cfs, fig=im['fig'])
 # %%
@@ -396,7 +390,7 @@ gplt.plot_hline(y=0.06,
                 loc='outside')
 
 
-savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res.png"
+savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res.pdf"
 
 gplt.save_fig(savepath_cfs, fig=im_cfs['fig'])
 
@@ -525,6 +519,6 @@ for idx, (res, cf_dict_era5) in enumerate(cf_dicts.items()):
 #                 loc='outside')
 
 
-savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res.png"
+savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res.pdf"
 
 gplt.save_fig(savepath_cfs, fig=im_cfs['fig'])

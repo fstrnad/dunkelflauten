@@ -1,6 +1,6 @@
+import dunkelflauten.pre_processing.workaround_fsr as wf
 import cmethods as cm
 import geoutils.geodata.solar_radiation as sr
-import pre_processing.workaround_fsr as wf
 import geoutils.utils.statistic_utils as sut
 import pandas as pd
 import numpy as np
@@ -10,7 +10,6 @@ import geoutils.utils.time_utils as tu
 import geoutils.utils.spatial_utils as sput
 import geoutils.utils.general_utils as gut
 import geoutils.utils.file_utils as fut
-import atlite as at
 from importlib import reload
 import geoutils.countries.countries as cnt
 import geoutils.cutouts.prepare_cutout as pc
@@ -21,14 +20,14 @@ if os.getenv("HOME") == '/home/ludwig/fstrnad80':
     cmip6_dir = "/mnt/lustre/work/ludwig/shared_datasets/CMIP6/"
     data_dir = f'{cmip6_dir}/downscaling/'
     era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
-    with open('./config_cluster.yaml', 'r') as file:
+    with open('../config_cluster.yaml', 'r') as file:
         config = yaml.safe_load(file)
 else:
     plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
     data_dir = "/home/strnad/data/CMIP6/downscaling/"
     cmip6_dir = "/home/strnad/data/CMIP6/"
     era5_dir = "/home/strnad/data/climate_data/Europe"
-    with open('./config.yaml', 'r') as file:
+    with open('../config.yaml', 'r') as file:
         config = yaml.safe_load(file)
 
 # %%

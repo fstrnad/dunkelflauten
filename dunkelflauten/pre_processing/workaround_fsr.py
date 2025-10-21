@@ -17,10 +17,9 @@ import geoutils.utils.spatial_utils as sput
 import geoutils.utils.general_utils as gut
 import geoutils.utils.file_utils as fut
 from importlib import reload
-
 import yaml
-with open('./config.yaml', 'r') as file:
-    config = yaml.safe_load(file)
+
+
 # %%
 
 
@@ -31,6 +30,8 @@ def create_means(
         means_folder=f'./variable_means/',
         override=True):
     reload(of)
+    with open('./config.yaml', 'r') as file:
+        config = yaml.safe_load(file)
     for gs in [0.25, 0.5, 1.0, 2.0]:
         fsr_file = f"{config['europe_dir']}/{country_name}_av/{gs}/{fsr_variable}_{gs}_{hourly_res}h.nc"
         fsr_data_path = f'{means_folder}/mean_{fsr_variable}_{country_name}_{gs}.nc'
