@@ -1,0 +1,73 @@
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/projects/atlite/atlite/resource.py:90: FutureWarning: 'add_cutout_windspeed' for wind turbine
+power curves will default to True in atlite relase v0.2.15.
+  warnings.warn(msg, FutureWarning)
+/mnt/lustre/home/ludwig/fstrnad80/projects/atlite/atlite/resource.py:90: FutureWarning: 'add_cutout_windspeed' for wind turbine
+power curves will default to True in atlite relase v0.2.15.
+  warnings.warn(msg, FutureWarning)
+/mnt/lustre/home/ludwig/fstrnad80/projects/atlite/atlite/resource.py:90: FutureWarning: 'add_cutout_windspeed' for wind turbine
+power curves will default to True in atlite relase v0.2.15.
+  warnings.warn(msg, FutureWarning)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/projects/atlite/atlite/resource.py:90: FutureWarning: 'add_cutout_windspeed' for wind turbine
+power curves will default to True in atlite relase v0.2.15.
+  warnings.warn(msg, FutureWarning)
+/mnt/lustre/home/ludwig/fstrnad80/projects/atlite/atlite/resource.py:90: FutureWarning: 'add_cutout_windspeed' for wind turbine
+power curves will default to True in atlite relase v0.2.15.
+  warnings.warn(msg, FutureWarning)
+/mnt/lustre/home/ludwig/fstrnad80/projects/atlite/atlite/resource.py:90: FutureWarning: 'add_cutout_windspeed' for wind turbine
+power curves will default to True in atlite relase v0.2.15.
+  warnings.warn(msg, FutureWarning)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/pyproj/crs/crs.py:143: FutureWarning: '+init=<authority>:<code>' syntax is deprecated. '<authority>:<code>' is the preferred initialization method. When making the change, be mindful of axis order changes: https://pyproj4.github.io/pyproj/stable/gotchas.html#axis-order-changes-in-proj-6
+  in_crs_string = _prepare_from_proj_string(in_crs_string)
+Traceback (most recent call last):
+  File "/mnt/lustre/home/ludwig/fstrnad80/projects/dunkelflauten/run_cf_cmip6.py", line 110, in <module>
+    ds_cutout = cfu.compute_cutouts(ds=ds_cmip)
+  File "/mnt/lustre/home/ludwig/fstrnad80/projects/dunkelflauten/cf_utils.py", line 112, in compute_cutouts
+    ds['toa_incident_solar_radiation'] = toa
+    ~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/xarray/core/dataset.py", line 1368, in __setitem__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: Cannot assign a Dataset to a single key - only a DataArray or Variable object can be stored under a single key.

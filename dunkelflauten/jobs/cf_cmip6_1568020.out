@@ -1,0 +1,13 @@
+Source python
+Python Version:
+Python 3.13.2
+Python Executable Location:
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/bin/python
+Start python command
+[30mFound 1 files!
+[30mFound 1 files!
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/MPI-ESM1-2-HR_ssp245/2020-01-01_2100-01-01_N3//samples_MPI-ESM1-2-HR_ssp245_2020-01-01_2100-01-01_0.25_log_False_bc.nc
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/MPI-ESM1-2-HR_ssp245/2020-01-01_2100-01-01_N3/obs_MPI-ESM1-2-HR_ssp245_2020-01-01_2100-01-01_1.0_log_False.nc
+[30mComputing toa_incident_solar_radiation  with grid step 0.25 and time steps 116880
+[30mStore to toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116880.nc...
+[30mStore as NETCDF4 with encoding float32!

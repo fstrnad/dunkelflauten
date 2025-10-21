@@ -1,0 +1,376 @@
+Source python
+Python Version:
+Python 3.13.2
+Python Executable Location:
+/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/bin/python
+Start python command
+[30mFound 1 files!
+[30mFound 1 files!
+[30mFound 1 files!
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/MPI-ESM1-2-HR_ssp585/2020-01-01_2100-01-01_N3//samples_MPI-ESM1-2-HR_ssp585_2020-01-01_2100-01-01_0.25_log_False_bc.nc
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/MPI-ESM1-2-HR_ssp585/2020-01-01_2100-01-01_N3/obs_MPI-ESM1-2-HR_ssp585_2020-01-01_2100-01-01_1.0_log_False.nc
+[30mLoading toa_incident_solar_radiation from toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116880.nc
+[30mOpen file: toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116880.nc
+[30mComputing fsr with grid step 0.25 and time steps 116880
+[30mOpen file: ./variable_means//mean_forecast_surface_roughness_Germany_0.25.nc
+[30mAdd units m/s to 10m_u_component_of_wind!
+[30mAdd units m/s to 10m_v_component_of_wind!
+[30mAdd units K to 2m_temperature!
+[30mAdd units J m**-2 to surface_solar_radiation_downwards!
+[30mAdd units J m**-2 to toa_incident_solar_radiation!
+[30mRename 10m_u_component_of_wind to u10!
+[30mRename 10m_v_component_of_wind to v10!
+[30mRename 2m_temperature to temperature!
+[30mRename surface_solar_radiation_downwards to ssrd!
+[30mRename toa_incident_solar_radiation to tisr!
+[30mRename forecast_surface_roughness to fsr!
+[30mComputing capacity factors for offwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for onwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for solar
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+Sum of weights: 1.0
+[30mCombining onshore and offshore wind
+[30mStore to /mnt/lustre/home/ludwig/fstrnad80/data/dunkelflauten//Germany/CMIP6/cf/cf_dict_MPI-ESM1-2-HR_ssp585_0.25_2020-01-01_2100-01-01_bc.npy
+[30mTotal size: 
+   10.71 GB
+[30mFound 1 files!
+[30mFound 1 files!
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/GFDL-ESM4_ssp245/2020-01-01_2100-01-01_N3//samples_GFDL-ESM4_ssp245_2020-01-01_2100-01-01_0.25_log_False_bc.nc
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/GFDL-ESM4_ssp245/2020-01-01_2100-01-01_N3/obs_GFDL-ESM4_ssp245_2020-01-01_2100-01-01_1.0_log_False.nc
+[30mComputing toa_incident_solar_radiation with grid step 0.25 and time steps 116800
+[30mStore to toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116800.nc...
+[30mStore as NETCDF4 with encoding float32!
+[30mFile toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116800.nc written!
+[30mTotal size: 
+   611.42 MB
+[30mComputing fsr with grid step 0.25 and time steps 116800
+[30mOpen file: ./variable_means//mean_forecast_surface_roughness_Germany_0.25.nc
+[30mAdd units m/s to 10m_u_component_of_wind!
+[30mAdd units m/s to 10m_v_component_of_wind!
+[30mAdd units K to 2m_temperature!
+[30mAdd units J m**-2 to surface_solar_radiation_downwards!
+[30mAdd units J m**-2 to toa_incident_solar_radiation!
+[30mRename 10m_u_component_of_wind to u10!
+[30mRename 10m_v_component_of_wind to v10!
+[30mRename 2m_temperature to temperature!
+[30mRename surface_solar_radiation_downwards to ssrd!
+[30mRename toa_incident_solar_radiation to tisr!
+[30mRename forecast_surface_roughness to fsr!
+[30mComputing capacity factors for offwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for onwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for solar
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+Sum of weights: 1.0
+[30mCombining onshore and offshore wind
+[30mStore to /mnt/lustre/home/ludwig/fstrnad80/data/dunkelflauten//Germany/CMIP6/cf/cf_dict_GFDL-ESM4_ssp245_0.25_2020-01-01_2100-01-01_bc.npy
+[30mTotal size: 
+   10.71 GB
+[30mFound 1 files!
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/GFDL-ESM4_ssp585/2020-01-01_2100-01-01_N3//samples_GFDL-ESM4_ssp585_2020-01-01_2100-01-01_0.25_log_False_bc.nc
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/GFDL-ESM4_ssp585/2020-01-01_2100-01-01_N3/obs_GFDL-ESM4_ssp585_2020-01-01_2100-01-01_1.0_log_False.nc
+[30mLoading toa_incident_solar_radiation from toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116800.nc
+[30mOpen file: toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116800.nc
+[30mComputing fsr with grid step 0.25 and time steps 116800
+[30mOpen file: ./variable_means//mean_forecast_surface_roughness_Germany_0.25.nc
+[30mAdd units m/s to 10m_u_component_of_wind!
+[30mAdd units m/s to 10m_v_component_of_wind!
+[30mAdd units K to 2m_temperature!
+[30mAdd units J m**-2 to surface_solar_radiation_downwards!
+[30mAdd units J m**-2 to toa_incident_solar_radiation!
+[30mRename 10m_u_component_of_wind to u10!
+[30mRename 10m_v_component_of_wind to v10!
+[30mRename 2m_temperature to temperature!
+[30mRename surface_solar_radiation_downwards to ssrd!
+[30mRename toa_incident_solar_radiation to tisr!
+[30mRename forecast_surface_roughness to fsr!
+[30mComputing capacity factors for offwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for onwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for solar
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+Sum of weights: 1.0
+[30mCombining onshore and offshore wind
+[30mStore to /mnt/lustre/home/ludwig/fstrnad80/data/dunkelflauten//Germany/CMIP6/cf/cf_dict_GFDL-ESM4_ssp585_0.25_2020-01-01_2100-01-01_bc.npy
+[30mTotal size: 
+   10.71 GB
+[30mFound 1 files!
+[30mFound 1 files!
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/MIROC6_ssp245/2020-01-01_2100-01-01_N3//samples_MIROC6_ssp245_2020-01-01_2100-01-01_0.25_log_False_bc.nc
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/MIROC6_ssp245/2020-01-01_2100-01-01_N3/obs_MIROC6_ssp245_2020-01-01_2100-01-01_1.0_log_False.nc
+[30mLoading toa_incident_solar_radiation from toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116880.nc
+[30mOpen file: toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116880.nc
+[30mComputing fsr with grid step 0.25 and time steps 116880
+[30mOpen file: ./variable_means//mean_forecast_surface_roughness_Germany_0.25.nc
+[30mAdd units m/s to 10m_u_component_of_wind!
+[30mAdd units m/s to 10m_v_component_of_wind!
+[30mAdd units K to 2m_temperature!
+[30mAdd units J m**-2 to surface_solar_radiation_downwards!
+[30mAdd units J m**-2 to toa_incident_solar_radiation!
+[30mRename 10m_u_component_of_wind to u10!
+[30mRename 10m_v_component_of_wind to v10!
+[30mRename 2m_temperature to temperature!
+[30mRename surface_solar_radiation_downwards to ssrd!
+[30mRename toa_incident_solar_radiation to tisr!
+[30mRename forecast_surface_roughness to fsr!
+[30mComputing capacity factors for offwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for onwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for solar
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+Sum of weights: 1.0
+[30mCombining onshore and offshore wind
+[30mStore to /mnt/lustre/home/ludwig/fstrnad80/data/dunkelflauten//Germany/CMIP6/cf/cf_dict_MIROC6_ssp245_0.25_2020-01-01_2100-01-01_bc.npy
+[30mTotal size: 
+   10.71 GB
+[30mFound 1 files!
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/MIROC6_ssp585/2020-01-01_2100-01-01_N3//samples_MIROC6_ssp585_2020-01-01_2100-01-01_0.25_log_False_bc.nc
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/MIROC6_ssp585/2020-01-01_2100-01-01_N3/obs_MIROC6_ssp585_2020-01-01_2100-01-01_1.0_log_False.nc
+[30mLoading toa_incident_solar_radiation from toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116880.nc
+[30mOpen file: toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116880.nc
+[30mComputing fsr with grid step 0.25 and time steps 116880
+[30mOpen file: ./variable_means//mean_forecast_surface_roughness_Germany_0.25.nc
+[30mAdd units m/s to 10m_u_component_of_wind!
+[30mAdd units m/s to 10m_v_component_of_wind!
+[30mAdd units K to 2m_temperature!
+[30mAdd units J m**-2 to surface_solar_radiation_downwards!
+[30mAdd units J m**-2 to toa_incident_solar_radiation!
+[30mRename 10m_u_component_of_wind to u10!
+[30mRename 10m_v_component_of_wind to v10!
+[30mRename 2m_temperature to temperature!
+[30mRename surface_solar_radiation_downwards to ssrd!
+[30mRename toa_incident_solar_radiation to tisr!
+[30mRename forecast_surface_roughness to fsr!
+[30mComputing capacity factors for offwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for onwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for solar
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+Sum of weights: 1.0
+[30mCombining onshore and offshore wind
+[30mStore to /mnt/lustre/home/ludwig/fstrnad80/data/dunkelflauten//Germany/CMIP6/cf/cf_dict_MIROC6_ssp585_0.25_2020-01-01_2100-01-01_bc.npy
+[30mTotal size: 
+   10.71 GB
+[30mFound 1 files!
+[30mFound 1 files!
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/IPSL-CM6A-LR_ssp245/2020-01-01_2100-01-01_N3//samples_IPSL-CM6A-LR_ssp245_2020-01-01_2100-01-01_0.25_log_False_bc.nc
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/IPSL-CM6A-LR_ssp245/2020-01-01_2100-01-01_N3/obs_IPSL-CM6A-LR_ssp245_2020-01-01_2100-01-01_1.0_log_False.nc
+[30mLoading toa_incident_solar_radiation from toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116880.nc
+[30mOpen file: toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116880.nc
+[30mComputing fsr with grid step 0.25 and time steps 116880
+[30mOpen file: ./variable_means//mean_forecast_surface_roughness_Germany_0.25.nc
+[30mAdd units m/s to 10m_u_component_of_wind!
+[30mAdd units m/s to 10m_v_component_of_wind!
+[30mAdd units K to 2m_temperature!
+[30mAdd units J m**-2 to surface_solar_radiation_downwards!
+[30mAdd units J m**-2 to toa_incident_solar_radiation!
+[30mRename 10m_u_component_of_wind to u10!
+[30mRename 10m_v_component_of_wind to v10!
+[30mRename 2m_temperature to temperature!
+[30mRename surface_solar_radiation_downwards to ssrd!
+[30mRename toa_incident_solar_radiation to tisr!
+[30mRename forecast_surface_roughness to fsr!
+[30mComputing capacity factors for offwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for onwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for solar
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+Sum of weights: 1.0
+[30mCombining onshore and offshore wind
+[30mStore to /mnt/lustre/home/ludwig/fstrnad80/data/dunkelflauten//Germany/CMIP6/cf/cf_dict_IPSL-CM6A-LR_ssp245_0.25_2020-01-01_2100-01-01_bc.npy
+[30mTotal size: 
+   10.71 GB
+[30mFound 1 files!
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/IPSL-CM6A-LR_ssp585/2020-01-01_2100-01-01_N3//samples_IPSL-CM6A-LR_ssp585_2020-01-01_2100-01-01_0.25_log_False_bc.nc
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/IPSL-CM6A-LR_ssp585/2020-01-01_2100-01-01_N3/obs_IPSL-CM6A-LR_ssp585_2020-01-01_2100-01-01_1.0_log_False.nc
+[30mLoading toa_incident_solar_radiation from toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116880.nc
+[30mOpen file: toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116880.nc
+[30mComputing fsr with grid step 0.25 and time steps 116880
+[30mOpen file: ./variable_means//mean_forecast_surface_roughness_Germany_0.25.nc
+[30mAdd units m/s to 10m_u_component_of_wind!
+[30mAdd units m/s to 10m_v_component_of_wind!
+[30mAdd units K to 2m_temperature!
+[30mAdd units J m**-2 to surface_solar_radiation_downwards!
+[30mAdd units J m**-2 to toa_incident_solar_radiation!
+[30mRename 10m_u_component_of_wind to u10!
+[30mRename 10m_v_component_of_wind to v10!
+[30mRename 2m_temperature to temperature!
+[30mRename surface_solar_radiation_downwards to ssrd!
+[30mRename toa_incident_solar_radiation to tisr!
+[30mRename forecast_surface_roughness to fsr!
+[30mComputing capacity factors for offwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for onwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for solar
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+Sum of weights: 1.0
+[30mCombining onshore and offshore wind
+[30mStore to /mnt/lustre/home/ludwig/fstrnad80/data/dunkelflauten//Germany/CMIP6/cf/cf_dict_IPSL-CM6A-LR_ssp585_0.25_2020-01-01_2100-01-01_bc.npy
+[30mTotal size: 
+   10.71 GB
+[30mFound 1 files!
+[30mFound 1 files!
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/CanESM5_ssp245/2020-01-01_2100-01-01_N3//samples_CanESM5_ssp245_2020-01-01_2100-01-01_0.25_log_False_bc.nc
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/CanESM5_ssp245/2020-01-01_2100-01-01_N3/obs_CanESM5_ssp245_2020-01-01_2100-01-01_1.0_log_False.nc
+[30mLoading toa_incident_solar_radiation from toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116800.nc
+[30mOpen file: toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116800.nc
+[30mComputing fsr with grid step 0.25 and time steps 116800
+[30mOpen file: ./variable_means//mean_forecast_surface_roughness_Germany_0.25.nc
+[30mAdd units m/s to 10m_u_component_of_wind!
+[30mAdd units m/s to 10m_v_component_of_wind!
+[30mAdd units K to 2m_temperature!
+[30mAdd units J m**-2 to surface_solar_radiation_downwards!
+[30mAdd units J m**-2 to toa_incident_solar_radiation!
+[30mRename 10m_u_component_of_wind to u10!
+[30mRename 10m_v_component_of_wind to v10!
+[30mRename 2m_temperature to temperature!
+[30mRename surface_solar_radiation_downwards to ssrd!
+[30mRename toa_incident_solar_radiation to tisr!
+[30mRename forecast_surface_roughness to fsr!
+[30mComputing capacity factors for offwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for onwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for solar
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+Sum of weights: 1.0
+[30mCombining onshore and offshore wind
+[30mStore to /mnt/lustre/home/ludwig/fstrnad80/data/dunkelflauten//Germany/CMIP6/cf/cf_dict_CanESM5_ssp245_0.25_2020-01-01_2100-01-01_bc.npy
+[30mTotal size: 
+   10.71 GB
+[30mFound 1 files!
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/CanESM5_ssp585/2020-01-01_2100-01-01_N3//samples_CanESM5_ssp585_2020-01-01_2100-01-01_0.25_log_False_bc.nc
+[30mOpen file: /mnt/lustre/work/ludwig/shared_datasets/CMIP6//downscaling//1.0/CanESM5_ssp585/2020-01-01_2100-01-01_N3/obs_CanESM5_ssp585_2020-01-01_2100-01-01_1.0_log_False.nc
+[30mLoading toa_incident_solar_radiation from toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116800.nc
+[30mOpen file: toa_incident_solar_radiation/toa_2020-01-01_2099-12-31_gs0.25_tsteps116800.nc
+[30mComputing fsr with grid step 0.25 and time steps 116800
+[30mOpen file: ./variable_means//mean_forecast_surface_roughness_Germany_0.25.nc
+[30mAdd units m/s to 10m_u_component_of_wind!
+[30mAdd units m/s to 10m_v_component_of_wind!
+[30mAdd units K to 2m_temperature!
+[30mAdd units J m**-2 to surface_solar_radiation_downwards!
+[30mAdd units J m**-2 to toa_incident_solar_radiation!
+[30mRename 10m_u_component_of_wind to u10!
+[30mRename 10m_v_component_of_wind to v10!
+[30mRename 2m_temperature to temperature!
+[30mRename surface_solar_radiation_downwards to ssrd!
+[30mRename toa_incident_solar_radiation to tisr!
+[30mRename forecast_surface_roughness to fsr!
+[30mComputing capacity factors for offwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for onwind
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+[30mComputing capacity factors for solar
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+Use influx (ssrd) for direct and diffuse calculation
+No albedo or outflux in dataset
+[30mRemove single value dimension dim_0!
+[30mRemove single value dimension dim_0!
+Sum of weights: 1.0
+[30mCombining onshore and offshore wind
+[30mStore to /mnt/lustre/home/ludwig/fstrnad80/data/dunkelflauten//Germany/CMIP6/cf/cf_dict_CanESM5_ssp585_0.25_2020-01-01_2100-01-01_bc.npy
+[30mTotal size: 
+   10.71 GB

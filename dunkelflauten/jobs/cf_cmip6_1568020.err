@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "/mnt/lustre/home/ludwig/fstrnad80/projects/dunkelflauten/run_cf_cmip6.py", line 109, in <module>
+    ds_cutout = cfu.compute_cutouts(ds=ds_cmip)
+  File "/mnt/lustre/home/ludwig/fstrnad80/projects/dunkelflauten/cf_utils.py", line 96, in compute_cutouts
+    fut.save_ds(ds=toa, filepath=toa_file)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/lustre/home/ludwig/fstrnad80/projects/geoutils/geoutils/utils/file_utils.py", line 188, in save_ds
+    write_job = ds.to_netcdf(filepath, encoding=enc,
+                             compute=False)
+  File "/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/xarray/core/dataarray.py", line 4212, in to_netcdf
+    return to_netcdf(  # type: ignore[return-value]  # mypy cannot resolve the overloads:(
+        dataset,
+    ...<10 lines>...
+        auto_complex=auto_complex,
+    )
+  File "/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/xarray/backends/api.py", line 1928, in to_netcdf
+    dump_to_store(
+    ~~~~~~~~~~~~~^
+        dataset, store, writer, encoding=encoding, unlimited_dims=unlimited_dims
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/mnt/lustre/home/ludwig/fstrnad80/miniforge3/envs/energy/lib/python3.13/site-packages/xarray/backends/api.py", line 1969, in dump_to_store
+    variables[k].encoding = enc
+    ~~~~~~~~~^^^
+KeyError: None
