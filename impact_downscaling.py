@@ -274,7 +274,6 @@ savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res_time_series
 
 gplt.save_fig(savepath_cfs, fig=im['fig'])
 # %%
-# %%
 # Local dunkelflauten Germany  3 rows
 reload(gplt)
 reload(cfu)

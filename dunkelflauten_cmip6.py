@@ -146,10 +146,72 @@ def country_df_ts(cf_dict, df_type='all',
                             get_mask=False)
     tps_dfl, len_dfl, n_dfl, avg_len_dfl = tu.analyze_binary_event_series(
         ts_evs)
-
-    dfl_per_year = tu.count_tps(len_dfl, counter='year')
+    st, et = tu.get_start_end_date(ts_evs)
+    dfl_per_year = tu.count_tps(len_dfl, counter='year',
+                                start_time=st,
+                                end_time=et)
 
     return dfl_per_year, len_dfl
+
+
+# %%
+threshold_country = 0.06
+num_hours = 48
+hourly_res = 6
+
+df_dict_country = {}
+len_df_country = {}
+df_dict_country['ERA5'], len_df_country['ERA5'] = country_df_ts(
+    cf_dict_era5,
+    num_hours=num_hours,
+    hourly_res=hourly_res,
+    threshold=threshold_country-0.005
+)
+
+for gcm in gcms:
+    ssp_df_dict_country = {}
+    ssp_len_df_country = {}
+    ens_mean = 0
+    for ssp in ssps:
+        df_tr_dict_country = {}
+        time_ranges = tr_ssp if ssp != 'historical' else tr_historical
+        print(f'Processing {gcm} {ssp}')
+        time_ranges = tr_ssp if ssp != 'historical' else tr_historical
+        start_date, end_date = time_ranges[0]
+        tr_str = f'{start_date}_{end_date}'
+        cf_dict_tr = gcm_ssp_cf_dict[gcm][ssp]
+        if cf_dict_tr:
+            dfs_per_year_country, len_dfs = country_df_ts(
+                cf_dict_tr,
+                num_hours=num_hours,
+                hourly_res=hourly_res,
+                threshold=threshold_country
+            )
+            ssp_df_dict_country[ssp] = dfs_per_year_country
+            ssp_len_df_country[ssp] = len_dfs
+    df_dict_country[gcm] = ssp_df_dict_country
+    len_df_country[gcm] = ssp_len_df_country
+
+df_dict_country[f'Ensemble mean'] = {}
+for ssp in ssps:
+    ens_mean = 0
+    for gcm in gcms:
+        ens_mean += df_dict_country[gcm][ssp]
+    df_dict_country['Ensemble mean'][ssp] = ens_mean / len(gcms)
+# %%
+
+
+def get_cf_mask(cf_dict, threshold=0.1):
+    """
+    Get a mask for the capacity factor data based on a threshold.
+    """
+    cf_onwind_solar = cfu.combined_cf_maps(cf_dict,
+                                           sources=['onwind', 'solar'],)
+    cf_onwind_solar = sput.rename_dims(cf_onwind_solar).mean(dim='time')
+
+    mask = xr.where(cf_onwind_solar < threshold, 0, 1)
+
+    return mask
 
 
 # %%
@@ -182,61 +244,11 @@ for gcm in gcms:
 
         ssp_df_dict_local[ssp] = dfs_per_year_local
     df_dict_local[gcm] = ssp_df_dict_local
-# %%
-threshold_country = 0.06
-num_hours = 48
-hourly_res = 6
-
-df_dict_country = {}
-len_df_country = {}
-df_dict_country['ERA5'], len_df_country['ERA5'] = country_df_ts(
-    cf_dict_era5,
-    num_hours=num_hours,
-    hourly_res=hourly_res,
-    threshold=threshold_country-0.005
-)
-
-for gcm in gcms:
-    ssp_df_dict_country = {}
-    ssp_len_df_country = {}
-    for ssp in ssps:
-        df_tr_dict_country = {}
-        time_ranges = tr_ssp if ssp != 'historical' else tr_historical
-        print(f'Processing {gcm} {ssp}')
-        time_ranges = tr_ssp if ssp != 'historical' else tr_historical
-        start_date, end_date = time_ranges[0]
-        tr_str = f'{start_date}_{end_date}'
-        cf_dict_tr = gcm_ssp_cf_dict[gcm][ssp]
-        if cf_dict_tr:
-            dfs_per_year_country, len_dfs = country_df_ts(
-                cf_dict_tr,
-                num_hours=num_hours,
-                hourly_res=hourly_res,
-                threshold=threshold_country
-            )
-            ssp_df_dict_country[ssp] = dfs_per_year_country
-            ssp_len_df_country[ssp] = len_dfs
-    df_dict_country[gcm] = ssp_df_dict_country
-    len_df_country[gcm] = ssp_len_df_country
-# %%
-
-
-def get_cf_mask(cf_dict, threshold=0.1):
-    """
-    Get a mask for the capacity factor data based on a threshold.
-    """
-    cf_onwind_solar = cfu.combined_cf_maps(cf_dict,
-                                           sources=['onwind', 'solar'],)
-    cf_onwind_solar = sput.rename_dims(cf_onwind_solar).mean(dim='time')
-
-    mask = xr.where(cf_onwind_solar < threshold, 0, 1)
-
-    return mask
-
 
 # %%
 # Risk per year
 reload(tu)
+reload(gplt)
 gcm = 'MPI-ESM1-2-HR'
 ssp_cf_dict = gcm_ssp_cf_dict['MPI-ESM1-2-HR']
 df_type = 'all'
@@ -335,103 +347,92 @@ for ssp, cf_dict_cmip in ssp_cf_dict.items():
 
     savepath = f'{config['plot_dir']}/dunkelflauten_cmip6/ts_df_{gcm_str}_{gs_dws}_{sd}_{ed}.png'
     gplt.save_fig(savepath)
-# %%
-# Time Series for all different GCMS:
-reload(sut)
-reload(gplt)
-ssp = 'ssp245'
-im = gplt.create_multi_plot(nrows=1, ncols=2,
-                            figsize=(15, 5))
-for idx, ssp in enumerate(['ssp245', 'ssp585']):
-    for idx_gcm, gcm in enumerate(gcms):
 
-        dfl_per_year = df_dict_country[gcm][ssp]
-        fit_vals, slope, p = sut.linear_regression_xarray(dfl_per_year)
-        slope *= 365*24
-        gplt.plot_2d(x=tu.get_year(dfl_per_year.time),
-                     y=[dfl_per_year.data, fit_vals],
-                     ax=im['ax'][idx],
-                     #  plot_type='bar',
-                     title=ssp,
-                     label=[None,
-                            f'{gcm} (sl {slope:.2f})'],
-                     ls_arr=['dotted', '-'],
-                     color=gplt.colors[idx_gcm+1],
-                     mk_arr=['.', ''],
-                     lw_arr=[0.5, 2],
-                     alpha_arr=[0.5, 1],
-                     loc='under',
-                     #  xlabel='Year',
-                     ylabel='Number of Dunkelflaute events',
-                     rot=90,
-                     #  ylim=(0, 9),
-                     )
-savepath = f'{config['plot_dir']}/dunkelflauten_cmip6/ts_df_year_reg.png'
-# gplt.save_fig(savepath)
 
 # %%
 # Compare historical ssps vs ERA5
+reload(gplt)
 ssp = 'historical'
 ncols = 3
 nrows = 2
+era5_ssp_tr = ('2020-01-01', '2025-01-01')
 im = gplt.create_multi_plot(nrows=nrows, ncols=ncols,
                             figsize=(15, 10),
                             hspace=0.4)
 for idx, ssp in enumerate(ssps):
-    for idx_gcm, gcm in enumerate(['ERA5'] + gcms):
+    for idx_gcm, gcm in enumerate(['ERA5'] + gcms + ['Ensemble mean']):
         if gcm != 'ERA5':
             dfl_per_year = df_dict_country[gcm][ssp]
-            len_dfl = len_df_country[gcm][ssp]
+            if gcm != 'Ensemble mean':
+                len_dfl = len_df_country[gcm][ssp]
         else:
-
             if ssp != 'historical':
-                continue
-            dfl_per_year_era5, _ = tu.equalize_time_points(
-                df_dict_country[gcm],
-                df_dict_country['MPI-ESM1-2-HR'][ssp]
-            )
+                dfl_per_year = tu.get_time_range_data(
+                    df_dict_country['ERA5'],
+                    time_range=era5_ssp_tr,
+                )
+                len_dfl = tu.get_time_range_data(
+                    len_df_country['ERA5'],
+                    time_range=era5_ssp_tr,
+                )
+            else:
+                dfl_per_year_era5, _ = tu.equalize_time_points(
+                    df_dict_country[gcm],
+                    df_dict_country['MPI-ESM1-2-HR'][ssp]
+                )
 
-            len_dfl = len_df_country[gcm]
-            len_dfl = tu.get_time_range_data(
-                len_dfl,
-                time_range=('1980-01-01', '2015-01-01'),
-            )
-            tr = tu.get_time_range(dfl_per_year_era5, asstr=True)
-            dfl_per_year = dfl_per_year_era5
+                len_dfl = len_df_country[gcm]
+                len_dfl = tu.get_time_range_data(
+                    len_dfl,
+                    time_range=('1980-01-01', '2015-01-01'),
+                )
+                tr = tu.get_time_range(dfl_per_year_era5, asstr=True)
+                dfl_per_year = dfl_per_year_era5
 
         fit_vals, slope, p = sut.linear_regression_xarray(dfl_per_year)
         slope *= 365
         ls = '--' if gcm == 'ERA5' else '-'
-        lw = 4 if gcm == 'ERA5' else 2
-
-        dfl_per_year = tu.rolling_timemean(
-            dfl_per_year, window=20, fill_lims=True)
-        avg_len = len_dfl.mean()
-
-        label = f'{gcm}' if idx == 0 else None
-
+        lw = 5 if gcm == 'ERA5' or gcm == 'Ensemble mean' else 3
+        color = gplt.colors[idx_gcm] if gcm != 'ERA5' else 'k'
+        window = 4 if gcm == 'ERA5' and ssp != 'historical' else 10
+        dfl_per_year_ds = tu.rolling_timemean(
+            dfl_per_year, window=window, fill_lims=True,
+            rolling_std=True)
+        dfl_per_year = dfl_per_year_ds['count_per_year']
+        dfl_per_year_std = dfl_per_year_ds['count_per_year_std']
+        label = f'{gcm}'
+        alpha = 1 if gcm == 'ERA5' or gcm == 'Ensemble mean' else 0.7
         gplt.plot_2d(x=tu.get_year(dfl_per_year.time),
                      y=[dfl_per_year.data,
                         # fit_vals
                         ],
+                     y_err=[dfl_per_year_std.data/2,
+                            # None
+                            ],
+                     alpha_err=0.2,
                      ax=im['ax'][idx],
                      #  plot_type='bar',
                      title=ssp,
-                     #  label=label,
                      ls_arr=[ls, ls],
-                     color=gplt.colors[idx_gcm],
+                     color=color,
                      mk_arr=['', ''],
                      lw_arr=[lw],
-                     alpha_arr=[1, 1],
+                     alpha=alpha,
                      ncol_legend=1,
                      loc='outside',
+                     label=label if idx == 2 else None,
                      #  xlabel='Year',
+                     set_grid=True,
                      ylabel='No. of events/year' if idx == 0 else None,
                      rot=45,
-                     ylim=(0, 5),
-                     #  box_loc=(-0.05, -0.2)
+                     ylim=(0, 5.5),
+                     #  box_loc=(-0.05, -0.2),
+                     zorder=100 if gcm == 'ERA5' else 10,
                      )
-
+        if gcm == 'ERA5' and ssp != 'historical':
+            continue
+        if gcm == 'Ensemble mean':
+            continue
         gplt.plot_hist(
             ax=im['ax'][idx + ncols],
             data=(len_dfl.data*hourly_res + 42)/24,
@@ -442,13 +443,13 @@ for idx, ssp in enumerate(ssps):
             ylim=(0.0, 0.9),
             lw=lw,
             ls=ls,
-            label=label,
-            color=gplt.colors[idx_gcm],
+            label=label if idx == 0 else None,
+            color=color,
             # mk='o',
             nbins=10,
-            loc='under',
-            box_loc=(-0.05, -0.25),
-            ncol_legend=6
+            # loc='under',
+            # box_loc=(-0.05, -0.25),
+            # ncol_legend=6
         )
 
 savepath = f'{config['plot_dir']}/dunkelflauten_cmip6/ts_df_year_all_ssps.png'
@@ -829,17 +830,18 @@ cap_fac_qt = winter_cfs_cmip.quantile(q=quantile, dim='time')
 cap_fac_qt = sput.check_dimensions(cap_fac_qt)
 risk = cap_fac_qt
 im = gplt.plot_map(risk,
-                    vertical_title=f'CF-TS Quantile {quantile} \nNov-Jan ({sd} - {ed})' if idx == 0 else None,
-                    y_title=1.2,
-                    cmap='cmo.oxy_r',
-                    #    mask=mask,
-                    # levels=25,
-                    tick_step=5,
-                    vmin=0.02,
-                    vmax=0.06,
-                    # lon_range=lon_range_ger,
-                    # lat_range=lat_range_ger,
-                    plot_borders=True,
-                    orientation='vertical',
-                    label=r'Quantile$_{0.05}$(CF) [a.u.]' if idx == ncols - 1 else None,
-                    )
+                   vertical_title=f'CF-TS Quantile {quantile} \nNov-Jan ({sd} - {ed})' if idx == 0 else None,
+                   y_title=1.2,
+                   cmap='cmo.oxy_r',
+                   #    mask=mask,
+                   # levels=25,
+                   tick_step=5,
+                   vmin=0.02,
+                   vmax=0.06,
+                   # lon_range=lon_range_ger,
+                   # lat_range=lat_range_ger,
+                   plot_borders=True,
+                   orientation='vertical',
+                   label=r'Quantile$_{0.05}$(CF) [a.u.]' if idx == ncols -
+                   1 else None,
+                   )

@@ -420,7 +420,7 @@ for idx, source in enumerate(sources):
                            vmax=-vmin,
                            levels=20,
                            tick_step=5,
-                           cmap='RdYlBu',
+                           cmap='cmo.delta',
                            centercolor='white',
                            label=f'Diff. CMIP6-ERA5' if idx == ncols - 1 else None,
                            orientation='vertical',
@@ -696,11 +696,15 @@ rel_shares_dict = {
 reload(gplt)
 ncols = 3
 nrows = 3
+lon_range_ger = [5, 16]
+lat_range_ger = [47, 55.5]
 im = gplt.create_multi_plot(nrows=nrows, ncols=ncols,
                             projection='PlateCarree',
                             wspace=0.2,
                             hspace=0.3,
-                            rem_idx=[3, 6],)
+                            rem_idx=[3, 6],
+                            figsize=(14, 10),
+                            )
 
 gplt.plot_map(rel_shares_era5,
               label='Occurrences per season [%]',
@@ -715,7 +719,8 @@ gplt.plot_map(rel_shares_era5,
               cmap='cmo.tempo',
               leftcolor='white',
               levels=20,
-              orientation='horizontal',)
+              orientation='horizontal',
+              tick_step=4,)
 
 for idx_ssp, (ssp_name, rel_shares_ensemble) in enumerate(rel_shares_dict.items()):
     rel_share = rel_shares_ensemble.max(dim='gcm')
@@ -734,16 +739,17 @@ for idx_ssp, (ssp_name, rel_shares_ensemble) in enumerate(rel_shares_dict.items(
                   cmap='cmo.tempo',
                   leftcolor='white',
                   levels=20,
-                  orientation='horizontal',)
+                  orientation='horizontal',
+                  tick_step=4,)
 
-    diff = rel_shares_era5 - rel_share
+    diff = rel_share - rel_shares_era5
     rel_diff = (diff / rel_share) * 100
     label = 'Diff. occurrences per season [%]'
     vmin_rel = -2.
     vmax_rel = 2.
     gplt.plot_map(diff,
                   label=label if idx_ssp == ncols - 1 else None,
-                  title='Diff. ERA5 - CMIP6 Max' if idx_ssp == 0 else None,
+                  title='Diff. CMIP6 Max - ERA5' if idx_ssp == 0 else None,
                   ax=im['ax'][idx_ssp*ncols + 2],
                   vmin=vmin_rel,
                   vmax=vmax_rel,
@@ -753,8 +759,46 @@ for idx_ssp, (ssp_name, rel_shares_ensemble) in enumerate(rel_shares_dict.items(
                   cmap='cmo.diff',
                   centercolor='white',
                   levels=10,
+                  tick_step=2,
                   orientation='horizontal',)
 
 savepath = f"{config['plot_dir']}/local_risks/CMIP6/local_compare_ensemble_era5_{threshold}.png"
+
+gplt.save_fig(savepath, fig=im['fig'])
+
+# %%
+# plot the standard deviation of the ensemble for historical, ssp245, ssp585
+nrows = 1
+ncols = 3
+im = gplt.create_multi_plot(nrows=nrows, ncols=ncols,
+                            projection='PlateCarree',
+                            wspace=0.3,
+                            hspace=0.3,
+                            # figsize=(14, 10),
+                            )
+
+
+for idx_ssp, (ssp_name, rel_shares_ensemble) in enumerate(rel_shares_dict.items()):
+    rel_share_std = rel_shares_ensemble.std(dim='gcm')
+
+    label = 'Std occ./season [%]'
+    gplt.plot_map(rel_share_std,
+                  label=label if idx_ssp == ncols - 1 else None,
+                  ax=im['ax'][idx_ssp],
+                  vertical_title='Ensemble Std CMIP6' if idx_ssp == 0 else None,
+                  title=f'{ssp_name} (2020-2050)' if idx_ssp > 0 else f'{ssp_name} (1985-2015)',
+                  vmin=0,
+                  vmax=1,
+                  lon_range=lon_range_ger,
+                  lat_range=lat_range_ger,
+                  plot_borders=True,
+                  cmap='cmo.tempo',
+                  leftcolor='white',
+                  levels=20,
+                  orientation='vertical',
+                  tick_step=4,)
+
+
+savepath = f"{config['plot_dir']}/local_risks/CMIP6/local_compare_ensemble_era5_std_{threshold}.png"
 
 gplt.save_fig(savepath, fig=im['fig'])
