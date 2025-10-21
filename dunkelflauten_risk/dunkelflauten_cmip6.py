@@ -1,9 +1,9 @@
 # %%
 from copy import deepcopy as dcp
-import cf_utils as cfu
+import capacity_factors.cf_utils as cfu
 import geoutils.utils.met_utils as mut
 import geoutils.geodata.solar_radiation as sr
-import workaround_fsr as wf
+import pre_processing.workaround_fsr as wf
 import geoutils.utils.statistic_utils as sut
 from scipy import stats
 import pandas as pd

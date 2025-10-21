@@ -2,10 +2,10 @@
 import sys
 import cmethods as cm
 
-import cf_utils as cfu
+import capacity_factors.cf_utils as cfu
 import geoutils.utils.met_utils as mut
 import geoutils.geodata.solar_radiation as sr
-import workaround_fsr as wf
+import pre_processing.workaround_fsr as wf
 import geoutils.utils.statistic_utils as sut
 from scipy import stats
 import pandas as pd
@@ -31,10 +31,10 @@ if os.getenv("HOME") == '/home/ludwig/fstrnad80':
     era5_dir = "/mnt/lustre/work/ludwig/shared_datasets/weatherbench2/Europe"
     with open('./config_cluster.yaml', 'r') as file:
         config = yaml.safe_load(file)
-    plot_dir = "/mnt/lustre/home/ludwig/fstrnad80/plots/dunkelflauten/downscaling_cmip6/"
+    plot_dir = "/mnt/lustre/home/ludwig/fstrnad80/plots/dunkelflauten/bias_correction/"
 
 else:
-    plot_dir = "/home/strnad/plots/dunkelflauten/downscaling_cmip6/"
+    plot_dir = "/home/strnad/plots/dunkelflauten/bias_correction/"
     data_dir = "/home/strnad/data/CMIP6/downscaling/"
     cmip6_dir = "/home/strnad/data/CMIP6/"
     era5_dir = "/home/strnad/data/climate_data/Europe"
