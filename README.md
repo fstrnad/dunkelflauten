@@ -1,6 +1,6 @@
 # Assessing the risk of future Dunkelflaute events for Germany using generative deep learning
 
-This repository contains the analysis scripts used in the paper [Assessing the risk of future Dunkelflaute events for Germany using generative deep learning](xxx) (Link follows). All code is written in Python and implements the data processing, analysis, and figure generation for the results presented in the manuscript.
+This repository contains the analysis scripts used in the paper [Assessing the risk of future Dunkelflaute events for Germany using generative deep learning](https://arxiv.org/abs/2509.24788). All code is written in Python and implements the data processing, analysis, and figure generation for the results presented in the manuscript.
 
 See also the companion repository with model code and simulations:
 - [DunkelFlowten](https://github.com/schmidtjonathan/DunkelFlowten)
