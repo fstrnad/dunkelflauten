@@ -408,12 +408,12 @@ im_cfs = gplt.create_multi_plot(
     nrows=nrows, ncols=ncols,
     wspace=0.1,
     hspace=0.25,
+    figsize=(4.5*ncols, 3.5*nrows),
     projection='PlateCarree',
     # projection_arr=['PlateCarree']*ncols*(nrows-1) + [None],
     # end_idx=(nrows-1)*ncols+1,
-    full_length_row=True,
+    # full_length_row=True,
     # end_row_idx=ncols - 1,
-    # figsize=()
     )
 # last_ax = im_cfs['ax'][-1]
 # last_ax.set_position([0.15, 0.07, 0.5, 0.1])
@@ -519,6 +519,9 @@ for idx, (res, cf_dict_era5) in enumerate(cf_dicts.items()):
 #                 loc='outside')
 
 
-savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res.pdf"
+savepath_cfs = f"{config['plot_dir']}/impact_downscaling/compare_res1.png"
 
-gplt.save_fig(savepath_cfs, fig=im_cfs['fig'])
+gplt.save_fig(savepath_cfs, #fig=im_cfs['fig'],
+              dpi=300)
+
+# %%

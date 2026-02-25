@@ -207,6 +207,7 @@ def get_cf_mask(cf_dict, threshold=0.1):
 
 
 # %%
+# Dfs per grid cell
 df_dict_local = {}
 
 num_hours = 48

@@ -753,7 +753,7 @@ for idx_ssp, (ssp_name, rel_shares_ensemble) in enumerate(rel_shares_dict.items(
                   tick_step=2,
                   orientation='horizontal',)
 
-savepath = f"{config['plot_dir']}/local_risks/CMIP6/local_compare_ensemble_era5_{threshold}.png"
+savepath = f"{config['plot_dir']}/local_risks/CMIP6/local_compare_ensemble_era5_{threshold}.pdf"
 
 gplt.save_fig(savepath, fig=im['fig'])
 
